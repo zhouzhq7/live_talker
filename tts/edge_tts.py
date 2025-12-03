@@ -123,6 +123,24 @@ class EdgeTTS(BaseTTS):
             import pydub
             from pydub import AudioSegment
             import io
+            import subprocess
+            
+            # Check if ffprobe is available
+            try:
+                subprocess.run(['ffprobe', '-version'], 
+                             capture_output=True, 
+                             check=True, 
+                             timeout=2)
+            except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
+                logger.error(
+                    f"[{self.name}] FFmpeg not found. FFmpeg is required for MP3 to PCM conversion.\n"
+                    "Install FFmpeg:\n"
+                    "  macOS: brew install ffmpeg\n"
+                    "  Ubuntu/Debian: sudo apt-get install ffmpeg\n"
+                    "  Windows: Download from https://ffmpeg.org/download.html\n"
+                    "  Or: conda install -c conda-forge ffmpeg"
+                )
+                return mp3_data
             
             # Load MP3
             audio = AudioSegment.from_mp3(io.BytesIO(mp3_data))
@@ -140,7 +158,18 @@ class EdgeTTS(BaseTTS):
             logger.warning(f"[{self.name}] pydub not installed, returning MP3 data. Install with: pip install pydub")
             return mp3_data
         except Exception as e:
-            logger.error(f"[{self.name}] MP3 to PCM conversion failed: {e}")
+            error_msg = str(e)
+            if 'ffprobe' in error_msg.lower() or 'no such file' in error_msg.lower():
+                logger.error(
+                    f"[{self.name}] FFmpeg not found. FFmpeg is required for MP3 to PCM conversion.\n"
+                    "Install FFmpeg:\n"
+                    "  macOS: brew install ffmpeg\n"
+                    "  Ubuntu/Debian: sudo apt-get install ffmpeg\n"
+                    "  Windows: Download from https://ffmpeg.org/download.html\n"
+                    "  Or: conda install -c conda-forge ffmpeg"
+                )
+            else:
+                logger.error(f"[{self.name}] MP3 to PCM conversion failed: {e}")
             return mp3_data
     
     @staticmethod

@@ -21,9 +21,22 @@ Live Talker 是一个完整的实时语音对话系统，基于 Eva 项目的 `p
 conda create -n live_talker python=3.10
 conda activate live_talker
 
-# 安装依赖
+# 安装系统依赖 (必需)
+# macOS:
+brew install ffmpeg
+
+# Ubuntu/Debian:
+sudo apt-get install ffmpeg
+
+# Windows: 从 https://ffmpeg.org/download.html 下载并添加到 PATH
+# 或使用 conda:
+conda install -c conda-forge ffmpeg
+
+# 安装 Python 依赖
 pip install -r requirements.txt
 ```
+
+**注意**: Edge-TTS 需要 FFmpeg 来转换 MP3 到 PCM 格式。如果未安装 FFmpeg，会出现 `ffprobe` 未找到的错误。
 
 ### 配置环境变量
 
