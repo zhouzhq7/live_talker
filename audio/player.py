@@ -104,6 +104,8 @@ class AudioPlayer:
             return
         
         try:
+            import time
+            
             # Open stream
             stream = self._audio_interface.open(
                 format=self._pyaudio.paInt16,
@@ -121,6 +123,19 @@ class AudioPlayer:
                     break
                 chunk = audio_data[i:i + chunk_size]
                 stream.write(chunk)
+            
+            # Wait for playback to complete
+            # Calculate actual audio duration
+            # 16-bit PCM = 2 bytes per sample
+            num_samples = len(audio_data) // (2 * self.channels)
+            audio_duration = num_samples / self.sample_rate
+            
+            # Wait for buffer to drain (add small buffer for safety)
+            # PyAudio typically has a small buffer, wait slightly longer
+            # Also account for chunk_size buffer delay
+            frames_per_buffer = chunk_size // (2 * self.channels)
+            buffer_duration = frames_per_buffer / self.sample_rate
+            time.sleep(audio_duration + buffer_duration + 0.05)
             
             # Close stream
             stream.stop_stream()
