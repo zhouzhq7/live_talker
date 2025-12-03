@@ -66,11 +66,14 @@ class AudioPlayer:
             blocking: If True, wait for playback to complete
         """
         if not self.is_initialized:
-            logger.warning("[AudioPlayer] Not initialized")
+            logger.warning("[AudioPlayer] ❌ Not initialized, cannot play audio")
             return
         
         if not audio_data:
+            logger.warning("[AudioPlayer] ❌ Audio data is empty, cannot play")
             return
+        
+        logger.debug(f"[AudioPlayer] 准备播放 - 数据大小: {len(audio_data)} bytes, 采样率: {self.sample_rate}Hz, 声道数: {self.channels}, blocking: {blocking}")
         
         if blocking:
             self._play_sync(audio_data)
@@ -101,10 +104,17 @@ class AudioPlayer:
     def _play_sync(self, audio_data: bytes) -> None:
         """Play audio synchronously"""
         if not self._audio_interface:
+            logger.error("[AudioPlayer] ❌ Audio interface not available")
             return
         
         try:
             import time
+            
+            # Clear stop event before starting playback
+            # This ensures that if stop() was called previously, we start fresh
+            self._stop_event.clear()
+            
+            logger.debug(f"[AudioPlayer] 打开音频流 - 格式: paInt16, 采样率: {self.sample_rate}Hz, 声道数: {self.channels}")
             
             # Open stream
             stream = self._audio_interface.open(
@@ -115,14 +125,26 @@ class AudioPlayer:
             )
             
             self.is_playing = True
+            logger.debug(f"[AudioPlayer] ✅ 音频流已打开，开始写入数据...")
             
             # Play audio
             chunk_size = 1024
+            total_chunks = (len(audio_data) + chunk_size - 1) // chunk_size
+            bytes_written = 0
+            
             for i in range(0, len(audio_data), chunk_size):
                 if self._stop_event.is_set():
+                    logger.warning("[AudioPlayer] ⚠️ 播放被中断")
                     break
                 chunk = audio_data[i:i + chunk_size]
-                stream.write(chunk)
+                try:
+                    stream.write(chunk)
+                    bytes_written += len(chunk)
+                except Exception as write_error:
+                    logger.error(f"[AudioPlayer] ❌ 写入音频数据失败 (chunk {i//chunk_size + 1}/{total_chunks}): {write_error}")
+                    raise
+            
+            logger.debug(f"[AudioPlayer] ✅ 数据写入完成 - 共写入 {bytes_written}/{len(audio_data)} bytes, {total_chunks} 个chunks")
             
             # Wait for playback to complete
             # Calculate actual audio duration
@@ -135,16 +157,23 @@ class AudioPlayer:
             # Also account for chunk_size buffer delay
             frames_per_buffer = chunk_size // (2 * self.channels)
             buffer_duration = frames_per_buffer / self.sample_rate
-            time.sleep(audio_duration + buffer_duration + 0.05)
+            wait_time = audio_duration + buffer_duration + 0.05
+            
+            logger.debug(f"[AudioPlayer] 等待播放完成 - 音频时长: {audio_duration:.2f}s, 缓冲区延迟: {buffer_duration:.3f}s, 总等待时间: {wait_time:.2f}s")
+            time.sleep(wait_time)
             
             # Close stream
             stream.stop_stream()
             stream.close()
             
             self.is_playing = False
+            logger.debug("[AudioPlayer] ✅ 播放完成，流已关闭")
             
         except Exception as e:
-            logger.error(f"[AudioPlayer] Playback failed: {e}")
+            logger.error(f"[AudioPlayer] ❌ 播放失败: {e}")
+            logger.error(f"[AudioPlayer] 错误详情 - 音频数据大小: {len(audio_data)} bytes, 采样率: {self.sample_rate}Hz, 声道数: {self.channels}")
+            import traceback
+            traceback.print_exc()
             self.is_playing = False
     
     def _play_async(self, audio_data: bytes) -> None:

@@ -310,13 +310,33 @@ class LiveTalker:
             audio_duration = len(audio_output) / (self.config.audio.sample_rate * 2)  # 16-bit = 2 bytes
             logger.info(f"[TTS] ✅ 合成完成 (耗时: {tts_elapsed:.2f}s, 音频时长: {audio_duration:.2f}s, 大小: {len(audio_output)} bytes)")
             
+            # Validate audio output format
+            if len(audio_output) == 0:
+                logger.error("[LiveTalker] ❌ 音频数据为空，无法播放")
+                self.is_processing = False
+                return
+            
+            # Check if audio data looks like PCM (should be divisible by 2 for 16-bit)
+            if len(audio_output) % 2 != 0:
+                logger.warning(f"[LiveTalker] ⚠️ 音频数据大小异常 (不是16-bit对齐): {len(audio_output)} bytes")
+            
             # Play audio
             logger.info("[LiveTalker] 开始播放回复...")
+            logger.debug(f"[LiveTalker] 播放参数 - 采样率: {self.config.audio.sample_rate}Hz, 声道数: {self.config.audio.channels}, 数据大小: {len(audio_output)} bytes")
             play_start_time = time.time()
             self.is_speaking = True
             self.recorder.set_system_speaking(True)
             
-            self.player.play_bytes(audio_output, blocking=True)
+            try:
+                self.player.play_bytes(audio_output, blocking=True)
+            except Exception as e:
+                logger.error(f"[LiveTalker] ❌ 播放失败: {e}")
+                import traceback
+                traceback.print_exc()
+                self.is_speaking = False
+                self.recorder.set_system_speaking(False)
+                self.is_processing = False
+                return
             
             play_elapsed = time.time() - play_start_time
             self.is_speaking = False

@@ -93,6 +93,12 @@ class EdgeTTS(BaseTTS):
             # Convert MP3 to PCM
             audio_data = self._mp3_to_pcm(mp3_data)
             
+            # Log conversion result
+            if audio_data == mp3_data:
+                logger.warning(f"[{self.name}] ⚠️ MP3到PCM转换可能失败，返回了原始MP3数据")
+            else:
+                logger.debug(f"[{self.name}] ✅ MP3到PCM转换成功 - MP3大小: {len(mp3_data)} bytes, PCM大小: {len(audio_data)} bytes")
+            
             return audio_data
             
         except Exception as e:
