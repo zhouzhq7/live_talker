@@ -4,17 +4,32 @@ Basic Demo - Simple usage example
 """
 
 import sys
+import logging
 from pathlib import Path
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+# Configure root logger FIRST
+root_logger = logging.getLogger()
+root_logger.setLevel(logging.INFO)
+if root_logger.handlers:
+    root_logger.handlers.clear()
+
+console_handler = logging.StreamHandler(sys.stdout)
+console_handler.setLevel(logging.DEBUG)
+formatter = logging.Formatter(
+    fmt='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+console_handler.setFormatter(formatter)
+root_logger.addHandler(console_handler)
+
 from config import load_config_from_env
 from core.talker import LiveTalker
-from utils.logger import setup_logger
 
-# Setup logging
-logger = setup_logger(level="INFO")
+# Get logger for this module
+logger = logging.getLogger(__name__)
 
 
 def main():

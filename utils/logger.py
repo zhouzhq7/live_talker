@@ -18,7 +18,7 @@ def setup_logger(
     Setup logger with console and file handlers
     
     Args:
-        name: Logger name
+        name: Logger name (use None or "" for root logger)
         level: Log level (DEBUG, INFO, WARNING, ERROR)
         log_file: Optional log file path
         console: Whether to log to console
@@ -26,11 +26,12 @@ def setup_logger(
     Returns:
         Configured logger
     """
-    logger = logging.getLogger(name)
-    logger.setLevel(getattr(logging, level.upper()))
+    # Get root logger to configure all loggers
+    root_logger = logging.getLogger()
+    root_logger.setLevel(getattr(logging, level.upper()))
     
-    # Remove existing handlers
-    logger.handlers.clear()
+    # Remove existing handlers to avoid duplicates
+    root_logger.handlers.clear()
     
     # Create formatter
     formatter = logging.Formatter(
@@ -43,7 +44,7 @@ def setup_logger(
         console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setLevel(logging.DEBUG)
         console_handler.setFormatter(formatter)
-        logger.addHandler(console_handler)
+        root_logger.addHandler(console_handler)
     
     # File handler
     if log_file:
@@ -53,7 +54,14 @@ def setup_logger(
         file_handler = logging.FileHandler(log_file, encoding='utf-8')
         file_handler.setLevel(logging.DEBUG)
         file_handler.setFormatter(formatter)
-        logger.addHandler(file_handler)
+        root_logger.addHandler(file_handler)
+    
+    # Get the specific logger (will inherit from root)
+    logger = logging.getLogger(name) if name else root_logger
+    logger.setLevel(getattr(logging, level.upper()))
+    
+    # Ensure propagation is enabled (default is True, but make it explicit)
+    logger.propagate = True
     
     return logger
 
