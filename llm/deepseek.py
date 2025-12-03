@@ -187,6 +187,8 @@ class DeepseekLLM(BaseLLM):
             logger.error(f"[{self.name}] Not initialized")
             return ""
         
+        import time
+        
         # Build messages
         messages = []
         if system_prompt:
@@ -204,10 +206,29 @@ class DeepseekLLM(BaseLLM):
             "content": user_message
         })
         
+        # Log request details
+        history_length = len(self.conversation_history)
+        total_messages = len(messages)
+        logger.info("=" * 70)
+        logger.info(f"🤖 [LLM] 开始调用 {self.name} API")
+        logger.info(f"   - 模型: {self.model}")
+        logger.info(f"   - API地址: {self.api_base}")
+        logger.info(f"   - 用户消息长度: {len(user_message)} 字符")
+        logger.info(f"   - 历史对话轮数: {history_length}")
+        logger.info(f"   - 总消息数: {total_messages}")
+        logger.info(f"   - 参数: temperature={self.temperature}, max_tokens={self.max_tokens}")
+        logger.info(f"   - 流式输出: {stream}")
+        logger.info("=" * 70)
+        
+        start_time = time.time()
+        
         try:
             if stream:
                 # Collect streaming chunks
                 response = ""
+                chunk_count = 0
+                logger.debug(f"[LLM] 开始流式接收响应...")
+                
                 stream_response = self.client.chat.completions.create(
                     model=self.model,
                     messages=messages,
@@ -220,6 +241,12 @@ class DeepseekLLM(BaseLLM):
                     if chunk.choices[0].delta.content:
                         content = chunk.choices[0].delta.content
                         response += content
+                        chunk_count += 1
+                        if chunk_count % 10 == 0:  # Log every 10 chunks
+                            logger.debug(f"[LLM] 已接收 {chunk_count} 个流式块，当前响应长度: {len(response)} 字符")
+                
+                elapsed_time = time.time() - start_time
+                logger.info(f"[LLM] ✅ 流式响应完成 (耗时: {elapsed_time:.2f}s, 块数: {chunk_count}, 响应长度: {len(response)} 字符)")
                 
                 # Add to history
                 self.conversation_history.append({
@@ -241,7 +268,20 @@ class DeepseekLLM(BaseLLM):
                     stream=False
                 )
                 
+                elapsed_time = time.time() - start_time
+                
+                # Extract response details
                 text = response.choices[0].message.content.strip()
+                usage = response.usage
+                
+                logger.info("=" * 70)
+                logger.info(f"✅ [LLM] API调用成功")
+                logger.info(f"   - 响应时间: {elapsed_time:.2f}s")
+                if usage:
+                    logger.info(f"   - Token使用: prompt={usage.prompt_tokens}, completion={usage.completion_tokens}, total={usage.total_tokens}")
+                logger.info(f"   - 响应长度: {len(text)} 字符")
+                logger.info(f"   - 响应预览: {text[:100]}{'...' if len(text) > 100 else ''}")
+                logger.info("=" * 70)
                 
                 # Add to history
                 self.conversation_history.append({
@@ -256,7 +296,12 @@ class DeepseekLLM(BaseLLM):
                 return text
                 
         except Exception as e:
-            logger.error(f"[{self.name}] Chat failed: {e}")
+            elapsed_time = time.time() - start_time
+            logger.error("=" * 70)
+            logger.error(f"❌ [LLM] API调用失败 (耗时: {elapsed_time:.2f}s)")
+            logger.error(f"   - 错误类型: {type(e).__name__}")
+            logger.error(f"   - 错误信息: {str(e)}")
+            logger.error("=" * 70)
             import traceback
             traceback.print_exc()
             return ""

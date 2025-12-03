@@ -155,7 +155,11 @@ class RealtimeRecorder:
                 if self.is_system_speaking:
                     has_speech = self.vad.detect(audio_chunk)
                     if has_speech:
-                        logger.info("[RealtimeRecorder] User interruption detected")
+                        logger.warning("=" * 70)
+                        logger.warning("⚠️  [VAD打断] 检测到用户打断系统语音！")
+                        logger.warning(f"   - 音频块大小: {len(audio_chunk)} bytes")
+                        logger.warning(f"   - VAD方法: {self.vad.method}")
+                        logger.warning("=" * 70)
                         if self.on_interrupt:
                             self.on_interrupt()
                         self.is_system_speaking = False
@@ -171,10 +175,17 @@ class RealtimeRecorder:
                 
                 if state["speech_ended"] and self.current_utterance:
                     # Complete utterance detected
-                    logger.info("[RealtimeRecorder] Complete utterance detected")
-                    
-                    # Combine chunks
                     utterance_data = b''.join(self.current_utterance)
+                    utterance_duration = len(utterance_data) / (self.sample_rate * 2)  # 16-bit = 2 bytes per sample
+                    num_chunks = len(self.current_utterance)
+                    
+                    logger.info("=" * 70)
+                    logger.info("🎤 [VAD] 完整语音片段检测完成")
+                    logger.info(f"   - 音频时长: {utterance_duration:.2f}s")
+                    logger.info(f"   - 音频大小: {len(utterance_data)} bytes")
+                    logger.info(f"   - 音频块数: {num_chunks}")
+                    logger.info(f"   - VAD方法: {self.vad.method}")
+                    logger.info("=" * 70)
                     
                     # Call callback
                     if self.on_utterance_complete:

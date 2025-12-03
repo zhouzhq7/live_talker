@@ -233,17 +233,22 @@ class LiveTalker:
         self.is_processing = True
         
         try:
+            import time
+            process_start_time = time.time()
+            
             logger.info("[LiveTalker] Processing user utterance...")
             
             # ASR: Speech to text
+            asr_start_time = time.time()
             text = self.asr.transcribe(
                 audio_data,
                 sample_rate=self.config.audio.sample_rate,
                 language=self.config.asr.language
             )
+            asr_elapsed = time.time() - asr_start_time
             
             if not text or not text.strip():
-                logger.warning("[LiveTalker] No text recognized")
+                logger.warning(f"[LiveTalker] No text recognized (ASR耗时: {asr_elapsed:.2f}s)")
                 self.is_processing = False
                 return
             
@@ -253,18 +258,28 @@ class LiveTalker:
             print("=" * 70)
             logger.info(f"[对话] 用户: {text}")
             
+            # Log ASR details
+            asr_duration = len(audio_data) / (self.config.audio.sample_rate * 2)  # 16-bit = 2 bytes
+            logger.info(f"[ASR] ✅ 识别完成 (耗时: {asr_elapsed:.2f}s, 音频时长: {asr_duration:.2f}s, 文本长度: {len(text)} 字符)")
+            
             # LLM: Generate response
-            logger.info("[LiveTalker] Generating response...")
+            logger.info("[LiveTalker] 调用LLM生成回复...")
+            llm_start_time = time.time()
+            
             response = self.llm.chat(
                 user_message=text,
                 system_prompt=self.conversation.system_prompt,
                 stream=False
             )
             
+            llm_elapsed = time.time() - llm_start_time
+            
             if not response or not response.strip():
-                logger.warning("[LiveTalker] No response generated")
+                logger.warning(f"[LiveTalker] LLM未生成有效回复 (耗时: {llm_elapsed:.2f}s)")
                 self.is_processing = False
                 return
+            
+            logger.info(f"[LiveTalker] LLM生成完成 (耗时: {llm_elapsed:.2f}s)")
             
             # Log assistant response
             print("\n" + "=" * 70)
@@ -273,25 +288,45 @@ class LiveTalker:
             logger.info(f"[对话] 助手: {response}")
             
             # TTS: Text to speech
-            logger.info("[LiveTalker] Synthesizing speech...")
+            logger.info("[LiveTalker] 开始TTS语音合成...")
+            tts_start_time = time.time()
+            
             audio_output = self.tts.synthesize(response)
             
+            tts_elapsed = time.time() - tts_start_time
+            
             if not audio_output:
-                logger.warning("[LiveTalker] TTS synthesis failed")
+                logger.warning(f"[LiveTalker] TTS合成失败 (耗时: {tts_elapsed:.2f}s)")
                 self.is_processing = False
                 return
             
+            audio_duration = len(audio_output) / (self.config.audio.sample_rate * 2)  # 16-bit = 2 bytes
+            logger.info(f"[TTS] ✅ 合成完成 (耗时: {tts_elapsed:.2f}s, 音频时长: {audio_duration:.2f}s, 大小: {len(audio_output)} bytes)")
+            
             # Play audio
-            logger.info("[LiveTalker] Playing response...")
+            logger.info("[LiveTalker] 开始播放回复...")
+            play_start_time = time.time()
             self.is_speaking = True
             self.recorder.set_system_speaking(True)
             
             self.player.play_bytes(audio_output, blocking=True)
             
+            play_elapsed = time.time() - play_start_time
             self.is_speaking = False
             self.recorder.set_system_speaking(False)
             
-            logger.info("[LiveTalker] Response complete")
+            logger.info(f"[LiveTalker] ✅ 回复播放完成 (播放耗时: {play_elapsed:.2f}s)")
+            
+            # Log total processing time
+            total_time = time.time() - process_start_time
+            logger.info("=" * 70)
+            logger.info(f"✅ [LiveTalker] 完整处理流程完成")
+            logger.info(f"   - 总耗时: {total_time:.2f}s")
+            logger.info(f"   - ASR: {asr_elapsed:.2f}s")
+            logger.info(f"   - LLM: {llm_elapsed:.2f}s")
+            logger.info(f"   - TTS: {tts_elapsed:.2f}s")
+            logger.info(f"   - 播放: {play_elapsed:.2f}s")
+            logger.info("=" * 70)
             
         except Exception as e:
             logger.error(f"[LiveTalker] Error processing utterance: {e}")
@@ -341,7 +376,12 @@ class LiveTalker:
     
     def _on_interrupt(self):
         """Callback when user interrupts system speech"""
-        logger.info("[LiveTalker] User interruption detected!")
+        logger.warning("=" * 70)
+        logger.warning("🛑 [打断处理] 用户打断系统语音")
+        logger.warning("   - 停止当前播放")
+        logger.warning("   - 清空音频缓冲区")
+        logger.warning("   - 重置VAD状态")
+        logger.warning("=" * 70)
         
         # Stop current playback
         self.player.stop()
@@ -350,4 +390,6 @@ class LiveTalker:
         
         # Clear buffer
         self.recorder.clear_buffer()
+        
+        logger.info("[打断处理] 系统已准备好接收新的用户输入")
 

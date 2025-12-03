@@ -124,11 +124,14 @@ class VADDetector:
             return False
         
         if self.method == "silero":
-            return self._detect_silero(audio_data)
+            result = self._detect_silero(audio_data)
         elif self.method == "webrtc":
-            return self._detect_webrtc(audio_data)
+            result = self._detect_webrtc(audio_data)
         else:
-            return self._detect_energy(audio_data)
+            result = self._detect_energy(audio_data)
+        
+        logger.debug(f"[VAD] 检测结果: {'有语音' if result else '无语音'} (方法: {self.method}, 音频长度: {len(audio_data)} bytes)")
+        return result
     
     def _detect_silero(self, audio_data: bytes) -> bool:
         """Silero VAD detection"""
@@ -239,12 +242,14 @@ class VADDetector:
                 # Check if speech duration is long enough
                 if self.speech_start_time is None:
                     self.speech_start_time = current_time
+                    logger.debug(f"[VAD] 检测到语音，开始计时 (min_duration={self.min_speech_duration}s)")
                 elif current_time - self.speech_start_time >= self.min_speech_duration:
                     # Speech started!
+                    speech_duration = current_time - self.speech_start_time
                     self.is_speaking = True
                     state["speech_started"] = True
                     state["is_speaking"] = True
-                    logger.debug("[VAD] Speech started")
+                    logger.info(f"[VAD] ✅ 语音开始 (持续时长: {speech_duration:.2f}s, 方法: {self.method})")
             
             # Reset silence timer
             self.silence_start_time = None
@@ -255,12 +260,14 @@ class VADDetector:
                 # Check if silence duration is long enough
                 if self.silence_start_time is None:
                     self.silence_start_time = current_time
+                    logger.debug(f"[VAD] 检测到静音，开始计时 (min_silence={self.min_silence_duration}s)")
                 elif current_time - self.silence_start_time >= self.min_silence_duration:
                     # Speech ended!
+                    silence_duration = current_time - self.silence_start_time
                     self.is_speaking = False
                     state["speech_ended"] = True
                     state["is_speaking"] = False
-                    logger.debug("[VAD] Speech ended")
+                    logger.info(f"[VAD] ✅ 语音结束 (静音时长: {silence_duration:.2f}s, 方法: {self.method})")
             
             # Reset speech timer
             self.speech_start_time = None
