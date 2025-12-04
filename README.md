@@ -14,6 +14,22 @@ Live Talker is a complete real-time voice conversation system, designed based on
 - 🤖 **Intelligent Conversation (LLM)** - Deepseek API integration
 - ⚡ **Low Latency** - Optimized real-time processing pipeline
 
+## Known Issues
+
+- VAD
+
+## Roadmap
+
+- [ ] Support for more LLM providers (OpenAI, Anthropic, etc.)
+- [ ] Web-based GUI client
+- [ ] Streaming ASR for lower latency
+- [ ] Multi-language support
+- [ ] Conversation history persistence
+- [ ] Custom wake word detection
+- [ ] Audio effects and filters
+- [ ] Plugin system for extensibility
+
+
 ## Quick Start
 
 ### Install Dependencies
