@@ -5,7 +5,7 @@ Displays voice interaction state with animation support
 
 from PyQt6.QtWidgets import QWidget
 from PyQt6.QtCore import Qt, QPropertyAnimation, QEasingCurve, QPointF, QRectF, pyqtProperty
-from PyQt6.QtGui import QPainter, QRadialGradient, QColor, QPen
+from PyQt6.QtGui import QPainter, QColor, QPen
 
 
 class VoiceSphere(QWidget):
@@ -70,46 +70,26 @@ class VoiceSphere(QWidget):
         if self._state != "idle":
             radius += self._pulse_radius
         
-        # Create radial gradient (PyQt6 requires QPointF)
-        gradient = QRadialGradient(center, radius)
-        
-        # Set colors based on state
+        # Set solid colors based on state (muted, pastel colors)
         if self._state == "idle":
-            # Static gradient: purple to pink
-            gradient.setColorAt(0.0, QColor(138, 43, 226, 180))  # Purple
-            gradient.setColorAt(0.5, QColor(255, 20, 147, 150))  # Pink
-            gradient.setColorAt(1.0, QColor(135, 206, 250, 120))  # Light blue
+            # Idle state: muted gray-blue
+            color = QColor(180, 190, 200, 150)  # Soft gray-blue
         elif self._state == "listening":
-            # Listening state: brighter blue
-            gradient.setColorAt(0.0, QColor(100, 149, 237, 200))  # Blue
-            gradient.setColorAt(0.5, QColor(255, 20, 147, 180))  # Pink
-            gradient.setColorAt(1.0, QColor(135, 206, 250, 150))  # Light blue
+            # Listening state: muted blue
+            color = QColor(150, 180, 210, 180)  # Soft blue
         elif self._state == "thinking":
-            # Thinking state: purple
-            gradient.setColorAt(0.0, QColor(138, 43, 226, 200))  # Purple
-            gradient.setColorAt(0.5, QColor(186, 85, 211, 180))  # Medium purple
-            gradient.setColorAt(1.0, QColor(221, 160, 221, 150))  # Light purple
+            # Thinking state: muted purple-gray
+            color = QColor(170, 160, 190, 180)  # Soft purple-gray
         elif self._state == "speaking":
-            # Speaking state: pink
-            gradient.setColorAt(0.0, QColor(255, 20, 147, 200))  # Pink
-            gradient.setColorAt(0.5, QColor(255, 105, 180, 180))  # Light pink
-            gradient.setColorAt(1.0, QColor(255, 182, 193, 150))  # Pale pink
+            # Speaking state: muted pink-gray
+            color = QColor(200, 170, 180, 180)  # Soft pink-gray
+        else:
+            color = QColor(180, 190, 200, 150)  # Default soft gray-blue
         
-        # Draw sphere
-        painter.setBrush(gradient)
+        # Draw sphere with solid color
+        painter.setBrush(color)
         painter.setPen(Qt.PenStyle.NoPen)
         sphere_rect = QRectF(center.x() - radius, center.y() - radius, 
                              radius * 2, radius * 2)
         painter.drawEllipse(sphere_rect)
-        
-        # Draw outer glow (optional)
-        if self._state != "idle":
-            glow_gradient = QRadialGradient(center, radius + 10)
-            glow_gradient.setColorAt(0.0, QColor(255, 255, 255, 0))
-            glow_gradient.setColorAt(0.5, QColor(255, 255, 255, 30))
-            glow_gradient.setColorAt(1.0, QColor(255, 255, 255, 0))
-            painter.setBrush(glow_gradient)
-            glow_rect = QRectF(center.x() - radius - 10, center.y() - radius - 10,
-                               (radius + 10) * 2, (radius + 10) * 2)
-            painter.drawEllipse(glow_rect)
 

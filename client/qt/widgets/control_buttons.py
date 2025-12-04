@@ -1,11 +1,11 @@
 """
 Control Buttons Widget - Bottom control buttons
-Microphone, upload, camera, cancel buttons
+Microphone and cancel buttons only
 """
 
 from PyQt6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLabel
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QIcon, QFont
+from PyQt6.QtGui import QFont
 
 
 class ControlButtons(QWidget):
@@ -13,8 +13,6 @@ class ControlButtons(QWidget):
     
     # Signal definitions
     microphone_clicked = pyqtSignal()
-    upload_clicked = pyqtSignal()
-    camera_clicked = pyqtSignal()
     cancel_clicked = pyqtSignal()
     
     def __init__(self, parent=None):
@@ -28,23 +26,13 @@ class ControlButtons(QWidget):
         
         # Button container
         button_layout = QHBoxLayout()
-        button_layout.setSpacing(20)
+        button_layout.setSpacing(30)
         button_layout.addStretch()
         
         # Microphone button
         self.mic_button = self.createButton("🎤", "Microphone")
         self.mic_button.clicked.connect(self.microphone_clicked.emit)
         button_layout.addWidget(self.mic_button)
-        
-        # Upload button
-        self.upload_button = self.createButton("📤", "Upload")
-        self.upload_button.clicked.connect(self.upload_clicked.emit)
-        button_layout.addWidget(self.upload_button)
-        
-        # Camera button
-        self.camera_button = self.createButton("📷", "Camera")
-        self.camera_button.clicked.connect(self.camera_clicked.emit)
-        button_layout.addWidget(self.camera_button)
         
         # Cancel button
         self.cancel_button = self.createButton("❌", "Cancel")

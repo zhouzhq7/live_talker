@@ -14,7 +14,6 @@ from PyQt6.QtGui import QFont, QColor
 sys.path.insert(0, str(Path(__file__).parent))
 
 from widgets.voice_sphere import VoiceSphere
-from widgets.status_bar import StatusBar
 from widgets.control_buttons import ControlButtons
 from talker_thread import TalkerThread
 
@@ -50,10 +49,6 @@ class MainWindow(QMainWindow):
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
         
-        # Top status bar
-        self.status_bar = StatusBar()
-        main_layout.addWidget(self.status_bar)
-        
         # Center area (with stretch)
         center_layout = QVBoxLayout()
         center_layout.addStretch()
@@ -73,7 +68,7 @@ class MainWindow(QMainWindow):
         center_layout.addWidget(self.voice_sphere, alignment=Qt.AlignmentFlag.AlignCenter)
         
         # Status text
-        self.status_label = QLabel("Click to start conversation")
+        self.status_label = QLabel("点击麦克风按钮开始对话")
         status_font = QFont()
         status_font.setPointSize(16)
         status_font.setBold(True)
@@ -103,17 +98,13 @@ class MainWindow(QMainWindow):
         main_layout.addWidget(self.control_buttons)
         
         # Set initial state
-        self.updateStatus("idle", "Click to start conversation")
+        self.updateStatus("idle", "点击麦克风开始对话")
     
     def setupConnections(self):
         """Setup signal-slot connections"""
         # Control button signals
         self.control_buttons.microphone_clicked.connect(self.onMicrophoneClicked)
         self.control_buttons.cancel_clicked.connect(self.onCancelClicked)
-        
-        # Status bar buttons (optional features)
-        self.status_bar.scene_button.clicked.connect(self.onSceneButtonClicked)
-        self.status_bar.text_button.clicked.connect(self.onTextButtonClicked)
     
     @pyqtSlot()
     def onMicrophoneClicked(self):
@@ -127,18 +118,6 @@ class MainWindow(QMainWindow):
     def onCancelClicked(self):
         """Cancel button clicked"""
         self.stopTalker()
-    
-    @pyqtSlot()
-    def onSceneButtonClicked(self):
-        """Scene selection button clicked"""
-        # TODO: Implement scene selection feature
-        pass
-    
-    @pyqtSlot()
-    def onTextButtonClicked(self):
-        """Text mode button clicked"""
-        # TODO: Implement text mode toggle
-        pass
     
     def startTalker(self):
         """Start Talker"""
@@ -169,34 +148,34 @@ class MainWindow(QMainWindow):
             self.talker_thread.wait(3000)  # Wait up to 3 seconds
             self.talker_thread = None
         
-        self.updateStatus("idle", "Click to start conversation")
+        self.updateStatus("idle", "点击麦克风按钮开始对话")
         self.control_buttons.setMicrophoneActive(False)
     
     @pyqtSlot(str)
     def onStateChanged(self, state: str):
         """State changed"""
         state_texts = {
-            "idle": "Click to start conversation",
-            "listening": "Listening...",
-            "thinking": "Thinking...",
-            "speaking": "Speaking..."
+            "idle": "点击麦克风按钮开始对话",
+            "listening": "正在听...",
+            "thinking": "正在思考...",
+            "speaking": "正在说话..."
         }
-        self.updateStatus(state, state_texts.get(state, "Unknown state"))
+        self.updateStatus(state, state_texts.get(state, "未知状态"))
     
     @pyqtSlot()
     def onUserSpeechDetected(self):
         """User speech detected"""
-        self.updateStatus("listening", "Listening...")
+        self.updateStatus("listening", "正在听...")
     
     @pyqtSlot(str)
     def onASRResult(self, text: str):
         """ASR recognition result"""
-        self.status_label.setText(f"You said: {text}")
+        self.status_label.setText(f"你说: {text}")
     
     @pyqtSlot()
     def onLLMThinking(self):
         """LLM thinking"""
-        self.updateStatus("thinking", "Thinking...")
+        self.updateStatus("thinking", "正在思考...")
     
     @pyqtSlot(str)
     def onLLMResponse(self, text: str):
@@ -206,23 +185,23 @@ class MainWindow(QMainWindow):
     @pyqtSlot()
     def onTTSSynthesizing(self):
         """TTS synthesizing"""
-        self.updateStatus("thinking", "Synthesizing speech...")
+        self.updateStatus("thinking", "正在合成语音...")
     
     @pyqtSlot()
     def onAudioPlaying(self):
         """Audio playing"""
-        self.updateStatus("speaking", "Speaking...")
+        self.updateStatus("speaking", "正在说话...")
     
     @pyqtSlot()
     def onAudioFinished(self):
         """Audio finished"""
-        self.updateStatus("listening", "Listening...")
+        self.updateStatus("listening", "正在听...")
     
     @pyqtSlot(str)
     def onError(self, error_msg: str):
         """Error handler"""
-        self.status_label.setText(f"Error: {error_msg}")
-        self.updateStatus("idle", "Error occurred")
+        self.status_label.setText(f"错误: {error_msg}")
+        self.updateStatus("idle", "发生错误")
     
     def updateStatus(self, state: str, text: str):
         """Update status"""
