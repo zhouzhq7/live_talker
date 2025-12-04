@@ -6,6 +6,21 @@ Live Talker is a complete real-time voice conversation system, designed based on
 
 [中文文档](docs/README_zh.md)
 
+
+## Demo
+
+You can view the following demo to see Live Talker's complete workflow and UI:
+
+<video src="docs/demo.MOV" controls width="800"></video>
+
+## Debug Log Reference
+
+When encountering issues, you can check the debug logs output in the terminal to understand the status of each system module:
+
+![Debug Log](docs/debug_log.png)
+
+
+
 ## Core Features
 
 - 🎤 **Real-time Speech Recognition (ASR)** - Supports Whisper, FunASR, FireRedASR
