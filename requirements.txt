@@ -36,3 +36,8 @@ pyyaml>=6.0                    # YAML config
 # Logging
 colorlog>=6.7.0                # Colored logging
 
+# Optional: Qt Client GUI (only needed for graphical interface)
+# Install with: pip install -r requirements.txt
+# Or skip if using command-line interface only
+PyQt6>=6.6.0                   # Qt GUI framework (optional, for client/qt)
+

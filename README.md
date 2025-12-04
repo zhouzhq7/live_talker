@@ -61,7 +61,12 @@ python examples/basic_demo.py
 # 完整功能演示
 python examples/full_demo.py
 
-# 主程序
+# 命令行主程序
+python main.py
+
+# Qt图形界面客户端
+cd client/qt
+pip install -r requirements.txt
 python main.py
 ```
 
@@ -74,6 +79,8 @@ live_talker/
 ├── tts/            # TTS语音合成模块
 ├── llm/            # LLM对话模块
 ├── core/           # 核心对话引擎
+├── client/         # 客户端
+│   └── qt/         # Qt图形界面客户端
 └── examples/       # 示例代码
 ```
 

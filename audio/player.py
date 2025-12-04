@@ -127,6 +127,9 @@ class AudioPlayer:
             self.is_playing = True
             logger.debug(f"[AudioPlayer] ✅ 音频流已打开，开始写入数据...")
             
+            # Record write start time
+            write_start_time = time.time()
+            
             # Play audio
             chunk_size = 1024
             total_chunks = (len(audio_data) + chunk_size - 1) // chunk_size
@@ -138,28 +141,36 @@ class AudioPlayer:
                     break
                 chunk = audio_data[i:i + chunk_size]
                 try:
+                    # stream.write() is blocking - it waits until data is written to buffer
+                    # This means writing time ≈ playback time
                     stream.write(chunk)
                     bytes_written += len(chunk)
                 except Exception as write_error:
                     logger.error(f"[AudioPlayer] ❌ 写入音频数据失败 (chunk {i//chunk_size + 1}/{total_chunks}): {write_error}")
                     raise
             
-            logger.debug(f"[AudioPlayer] ✅ 数据写入完成 - 共写入 {bytes_written}/{len(audio_data)} bytes, {total_chunks} 个chunks")
+            write_elapsed = time.time() - write_start_time
+            logger.debug(f"[AudioPlayer] ✅ 数据写入完成 - 共写入 {bytes_written}/{len(audio_data)} bytes, {total_chunks} 个chunks, 写入耗时: {write_elapsed:.2f}s")
             
-            # Wait for playback to complete
             # Calculate actual audio duration
             # 16-bit PCM = 2 bytes per sample
             num_samples = len(audio_data) // (2 * self.channels)
             audio_duration = num_samples / self.sample_rate
             
-            # Wait for buffer to drain (add small buffer for safety)
-            # PyAudio typically has a small buffer, wait slightly longer
-            # Also account for chunk_size buffer delay
-            frames_per_buffer = chunk_size // (2 * self.channels)
-            buffer_duration = frames_per_buffer / self.sample_rate
-            wait_time = audio_duration + buffer_duration + 0.05
+            # stream.write() is blocking, so most of the audio has already been played
+            # We only need to wait for the last chunk's buffer to drain
+            # The last chunk size might be smaller than chunk_size
+            last_chunk_size = len(audio_data) % chunk_size
+            if last_chunk_size == 0:
+                last_chunk_size = chunk_size
             
-            logger.debug(f"[AudioPlayer] 等待播放完成 - 音频时长: {audio_duration:.2f}s, 缓冲区延迟: {buffer_duration:.3f}s, 总等待时间: {wait_time:.2f}s")
+            frames_in_last_chunk = last_chunk_size // (2 * self.channels)
+            last_chunk_duration = frames_in_last_chunk / self.sample_rate
+            
+            # Wait only for the last chunk to finish playing (plus small safety margin)
+            wait_time = last_chunk_duration + 0.05
+            
+            logger.debug(f"[AudioPlayer] 等待最后chunk播放完成 - 音频总时长: {audio_duration:.2f}s, 写入耗时: {write_elapsed:.2f}s, 最后chunk时长: {last_chunk_duration:.3f}s, 等待时间: {wait_time:.3f}s")
             time.sleep(wait_time)
             
             # Close stream

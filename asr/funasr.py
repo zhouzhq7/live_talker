@@ -87,7 +87,8 @@ class FunASR(BaseASR):
                 model=self.model_name,
                 device=self.device,
                 disable_pbar=False,  # Enable progress bar
-                disable_log=False
+                disable_log=True,
+                disable_update=True
             )
             
             logger.info(f"[{self.name}] ✓ ASR model loaded successfully!")

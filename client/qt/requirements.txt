@@ -1,0 +1,6 @@
+# Qt Client Requirements
+# Note: These dependencies are also included in the main requirements.txt
+# as optional dependencies. You can install them from there or here.
+
+PyQt6>=6.6.0
+

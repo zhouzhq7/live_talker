@@ -1,0 +1,4 @@
+"""
+Live Talker Qt Client
+"""
+

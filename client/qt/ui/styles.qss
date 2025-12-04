@@ -1,0 +1,29 @@
+/* Live Talker Qt Client Styles */
+
+/* 主窗口背景 */
+QMainWindow {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+        stop:0 #FFB6C1, stop:1 #87CEEB);
+}
+
+/* 按钮通用样式 */
+QPushButton {
+    border-radius: 15px;
+    padding: 8px 16px;
+    font-size: 14px;
+    color: #333333;
+}
+
+QPushButton:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+QPushButton:pressed {
+    background-color: rgba(255, 255, 255, 0.4);
+}
+
+/* 状态标签 */
+QLabel {
+    color: rgba(0, 0, 0, 0.7);
+}
+
