@@ -42,14 +42,14 @@ class VoiceSphere(QWidget):
         Set state
         
         Args:
-            state: idle, listening, thinking, speaking
+            state: idle, initializing, listening, thinking, speaking
         """
         self._state = state
         
         if state == "idle":
             self._pulse_animation.stop()
             self._pulse_radius = 0.0
-        elif state in ["listening", "thinking", "speaking"]:
+        elif state in ["initializing", "listening", "thinking", "speaking"]:
             if self._pulse_animation.state() != QPropertyAnimation.State.Running:
                 self._pulse_animation.setStartValue(0.0)
                 self._pulse_animation.setEndValue(20.0)
@@ -74,6 +74,9 @@ class VoiceSphere(QWidget):
         if self._state == "idle":
             # Idle state: muted gray-blue
             color = QColor(180, 190, 200, 150)  # Soft gray-blue
+        elif self._state == "initializing":
+            # Initializing state: muted yellow-gray
+            color = QColor(190, 185, 170, 180)  # Soft yellow-gray
         elif self._state == "listening":
             # Listening state: muted blue
             color = QColor(150, 180, 210, 180)  # Soft blue

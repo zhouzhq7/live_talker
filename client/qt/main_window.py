@@ -124,10 +124,14 @@ class MainWindow(QMainWindow):
         if self.talker_thread and self.talker_thread.isRunning():
             return
         
+        # Show initializing state immediately
+        self.updateStatus("initializing", "启动中...")
+        
         self.talker_thread = TalkerThread()
         
         # Connect signals
         self.talker_thread.state_changed.connect(self.onStateChanged)
+        self.talker_thread.models_loaded.connect(self.onModelsLoaded)
         self.talker_thread.user_speech_detected.connect(self.onUserSpeechDetected)
         self.talker_thread.asr_result.connect(self.onASRResult)
         self.talker_thread.llm_thinking.connect(self.onLLMThinking)
@@ -140,6 +144,11 @@ class MainWindow(QMainWindow):
         # Start thread
         self.talker_thread.start()
         self.control_buttons.setMicrophoneActive(True)
+    
+    @pyqtSlot()
+    def onModelsLoaded(self):
+        """Models loaded, ready to start listening"""
+        self.updateStatus("listening", "正在听...")
     
     def stopTalker(self):
         """Stop Talker"""
@@ -156,11 +165,14 @@ class MainWindow(QMainWindow):
         """State changed"""
         state_texts = {
             "idle": "点击麦克风按钮开始对话",
+            "initializing": "启动中...",
             "listening": "正在听...",
             "thinking": "正在思考...",
             "speaking": "正在说话..."
         }
-        self.updateStatus(state, state_texts.get(state, "未知状态"))
+        # Don't update if it's initializing (we handle that separately)
+        if state != "initializing":
+            self.updateStatus(state, state_texts.get(state, "未知状态"))
     
     @pyqtSlot()
     def onUserSpeechDetected(self):

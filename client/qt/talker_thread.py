@@ -30,6 +30,7 @@ class TalkerThread(QThread):
     audio_finished = pyqtSignal()  # Audio finished
     error_occurred = pyqtSignal(str)  # Error occurred
     state_changed = pyqtSignal(str)  # State changed: idle, listening, thinking, speaking
+    models_loaded = pyqtSignal()  # Models loaded and ready
     
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -39,10 +40,14 @@ class TalkerThread(QThread):
     def run(self):
         """Run thread"""
         try:
+            # Emit initializing state
+            self.state_changed.emit("initializing")
+            
             # Load configuration
             config = load_config_from_env()
             
-            # Create LiveTalker instance
+            # Create LiveTalker instance (this will load all models)
+            logger.info("Loading models...")
             self.talker = LiveTalker(config=config)
             
             # Save original methods
@@ -74,7 +79,11 @@ class TalkerThread(QThread):
             self.talker._on_utterance_complete = wrapped_on_utterance
             self.talker._on_interrupt = wrapped_on_interrupt
             
-            # Start system
+            # Models are now loaded, emit signal
+            logger.info("Models loaded successfully")
+            self.models_loaded.emit()
+            
+            # Start system (recorder will start listening)
             self.state_changed.emit("listening")
             self.talker.recorder.start()
             self.talker.is_running = True
