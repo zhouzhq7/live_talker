@@ -51,6 +51,8 @@ class RealtimeRecorder:
         
         self.audio_queue = queue.Queue()
         self.current_utterance = []
+        self.pre_speech_buffer = []  # Buffer to store audio before speech_started
+        self.pre_speech_buffer_size = max(20, int(1.0 * sample_rate / chunk_size))  # ~1 second of audio
         self.is_recording = False
         self.is_system_speaking = False
         
@@ -169,8 +171,19 @@ class RealtimeRecorder:
                 has_speech = self.vad.detect(audio_chunk)
                 state = self.vad.update_state(has_speech)
                 
+                # Always maintain pre-speech buffer (circular buffer)
+                self.pre_speech_buffer.append(audio_chunk)
+                if len(self.pre_speech_buffer) > self.pre_speech_buffer_size:
+                    self.pre_speech_buffer.pop(0)  # Remove oldest chunk
+                
                 if state["is_speaking"] or state["speech_started"]:
-                    # Collect speech
+                    # When speech starts, include pre-speech buffer
+                    if state["speech_started"] and self.pre_speech_buffer:
+                        logger.debug(f"[RealtimeRecorder] Speech started, adding {len(self.pre_speech_buffer)} pre-speech chunks")
+                        self.current_utterance.extend(self.pre_speech_buffer)
+                        self.pre_speech_buffer = []  # Clear buffer after using
+                    
+                    # Collect current speech chunk
                     self.current_utterance.append(audio_chunk)
                 
                 if state["speech_ended"] and self.current_utterance:
@@ -196,6 +209,7 @@ class RealtimeRecorder:
                     
                     # Reset
                     self.current_utterance = []
+                    self.pre_speech_buffer = []  # Also clear pre-speech buffer
                 
             except queue.Empty:
                 continue
@@ -217,6 +231,7 @@ class RealtimeRecorder:
     def clear_buffer(self):
         """Clear current utterance buffer"""
         self.current_utterance = []
+        self.pre_speech_buffer = []
         self.vad.reset()
         logger.debug("[RealtimeRecorder] Buffer cleared")
 
