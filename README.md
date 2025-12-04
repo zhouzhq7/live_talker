@@ -1,149 +1,150 @@
-# Live Talker - 实时语音对话系统
+# Live Talker - Real-time Voice Conversation System
 
-## 项目概述
+## Overview
 
-Live Talker 是一个完整的实时语音对话系统，基于 Eva 项目的 `perception/audio` 模块设计，实现了从语音输入到智能回复的完整流程。
+Live Talker is a complete real-time voice conversation system, designed based on the `perception/audio` module from the Eva project, implementing a full pipeline from voice input to intelligent responses.
 
-## 核心功能
+[中文文档](docs/README_zh.md)
 
-- 🎤 **实时语音识别 (ASR)** - 支持 Whisper、FunASR、FireRedASR
-- 🔊 **语音合成 (TTS)** - 支持 Edge-TTS、Pyttsx3
-- 🎯 **语音活动检测 (VAD)** - 自动分段、打断检测
-- 🤖 **智能对话 (LLM)** - Deepseek API 集成
-- ⚡ **低延迟** - 优化的实时处理流程
+## Core Features
 
-## 快速开始
+- 🎤 **Real-time Speech Recognition (ASR)** - Supports Whisper, FunASR, FireRedASR
+- 🔊 **Text-to-Speech (TTS)** - Supports Edge-TTS, Pyttsx3
+- 🎯 **Voice Activity Detection (VAD)** - Automatic segmentation, interruption detection
+- 🤖 **Intelligent Conversation (LLM)** - Deepseek API integration
+- ⚡ **Low Latency** - Optimized real-time processing pipeline
 
-### 安装依赖
+## Quick Start
+
+### Install Dependencies
 
 ```bash
-# 创建conda环境
+# Create conda environment
 conda create -n live_talker python=3.10
 conda activate live_talker
 
-# 安装系统依赖 (必需)
+# Install system dependencies (required)
 # macOS:
 brew install ffmpeg
 
 # Ubuntu/Debian:
 sudo apt-get install ffmpeg
 
-# Windows: 从 https://ffmpeg.org/download.html 下载并添加到 PATH
-# 或使用 conda:
+# Windows: Download from https://ffmpeg.org/download.html and add to PATH
+# Or use conda:
 conda install -c conda-forge ffmpeg
 
-# 安装 Python 依赖
+# Install Python dependencies
 pip install -r requirements.txt
 ```
 
-**注意**: Edge-TTS 需要 FFmpeg 来转换 MP3 到 PCM 格式。如果未安装 FFmpeg，会出现 `ffprobe` 未找到的错误。
+**Note**: Edge-TTS requires FFmpeg to convert MP3 to PCM format. If FFmpeg is not installed, you will encounter a `ffprobe` not found error.
 
-### 配置环境变量
+### Configure Environment Variables
 
-在项目根目录创建 `.env` 文件（或复制 `.env.example`）：
+Create a `.env` file in the project root directory (or copy `.env.example`):
 
 ```bash
-# 必需：设置 Deepseek API Key
+# Required: Set Deepseek API Key
 DEEPSEEK_API_KEY=your-deepseek-api-key-here
 
-# 可选：自定义模型缓存目录
+# Optional: Custom model cache directory
 MODEL_CACHE_DIR=D:\models
 ```
 
-更多配置选项请参考 `.env.example` 文件。
+For more configuration options, please refer to the `.env.example` file.
 
-### 运行示例
+### Run Examples
 
 ```bash
-# 基础演示
+# Basic demo
 python examples/basic_demo.py
 
-# 完整功能演示
+# Full feature demo
 python examples/full_demo.py
 
-# 命令行主程序
+# Command-line main program
 python main.py
 
-# Qt图形界面客户端
+# Qt GUI client
 cd client/qt
 pip install -r requirements.txt
 python main.py
 ```
 
-## 项目结构
+## Project Structure
 
 ```
 live_talker/
-├── audio/          # 音频处理模块
-├── asr/            # ASR语音识别模块
-├── tts/            # TTS语音合成模块
-├── llm/            # LLM对话模块
-├── core/           # 核心对话引擎
-├── client/         # 客户端
-│   └── qt/         # Qt图形界面客户端
-└── examples/       # 示例代码
+├── audio/          # Audio processing module
+├── asr/            # ASR speech recognition module
+├── tts/            # TTS speech synthesis module
+├── llm/            # LLM conversation module
+├── core/           # Core conversation engine
+├── client/         # Clients
+│   └── qt/         # Qt GUI client
+└── examples/       # Example code
 ```
 
-## 配置说明
+## Configuration
 
-编辑 `config.py` 或设置环境变量：
+Edit `config.py` or set environment variables:
 
 ```bash
 # Deepseek API Key
 export DEEPSEEK_API_KEY="your-api-key"
 
-# ASR引擎选择
+# ASR engine selection
 export ASR_ENGINE="funasr"  # funasr, whisper, fireredasr
 
-# TTS引擎选择
+# TTS engine selection
 export TTS_ENGINE="edge"    # edge, pyttsx3
 
-# 模型缓存目录（默认：D:\models）
+# Model cache directory (default: D:\models)
 export MODEL_CACHE_DIR="D:\\models"
 ```
 
-### 模型下载路径
+### Model Download Paths
 
-所有模型文件将下载到指定的缓存目录：
+All model files will be downloaded to the specified cache directory:
 - **ModelScope (FunASR)**: `D:\models\modelscope`
 - **HuggingFace (Whisper)**: `D:\models\huggingface`
 - **Torch Hub (Silero VAD)**: `D:\models\torch`
 
-可以通过环境变量 `MODEL_CACHE_DIR` 自定义路径。
+You can customize the path using the `MODEL_CACHE_DIR` environment variable.
 
-## 使用示例
+## Usage Example
 
 ```python
 from core.talker import LiveTalker
 
-# 初始化
+# Initialize
 talker = LiveTalker(
     asr_engine="funasr",
     tts_engine="edge",
     llm_provider="deepseek"
 )
 
-# 启动对话
+# Start conversation
 talker.start()
 
-# 自动处理：
-# 用户说话 → ASR识别 → LLM生成回复 → TTS合成 → 播放
+# Automatic processing:
+# User speaks → ASR recognition → LLM generates response → TTS synthesis → Playback
 ```
 
-## 技术栈
+## Tech Stack
 
 - **ASR**: FunASR, Whisper, FireRedASR
 - **TTS**: Edge-TTS, Pyttsx3
 - **VAD**: Silero, WebRTC, Energy-based
 - **LLM**: Deepseek API
-- **音频**: PyAudio, NumPy
+- **Audio**: PyAudio, NumPy
 
-## 参考
+## References
 
-- Eva项目: `perception/audio` 模块
-- Voice Benchmark: ASR/TTS对比项目
+- Eva project: `perception/audio` module
+- Voice Benchmark: ASR/TTS comparison project
 
 ## License
 
 MIT License
-
