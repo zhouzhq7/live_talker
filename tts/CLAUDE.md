@@ -7,6 +7,7 @@
 
 | ID | Time | T | Title | Read |
 |----|------|---|-------|------|
+| #257 | 10:36 AM | 🟣 | Phase 5 completed: TTS Streaming Upgrade | ~105 |
 | #254 | 10:32 AM | 🔴 | Fixed async generator signature in TTS base class | ~203 |
 | #252 | " | 🟣 | Edge-TTS streaming synthesis added | ~214 |
 | #251 | 10:31 AM | 🟣 | Edge-TTS streaming support preparation | ~176 |
