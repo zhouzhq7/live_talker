@@ -8,4 +8,5 @@
 | ID | Time | T | Title | Read |
 |----|------|---|-------|------|
 | #194 | 9:39 AM | ✅ | Added clarifying comment to test_reset | ~179 |
+| #180 | 9:35 AM | 🟣 | Created unit tests for pipeline state machine | ~377 |
 </claude-mem-context>

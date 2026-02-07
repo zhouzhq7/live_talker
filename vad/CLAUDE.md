@@ -1,3 +1,191 @@
+# VAD Module
+
+## Overview
+
+The VAD (Voice Activity Detection) module provides voice activity detection for the v2.0 real-time voice conversation system.
+
+## Structure
+
+```
+vad/
+├── __init__.py         # Module exports (VADState, VADResult, VADetector)
+├── base.py            # Abstract base classes
+├── silero.py         # Silero VAD implementation
+├── ten_vad.py        # TEN-VAD and SimpleVAD implementations
+└── CLAUDE.md         # This file
+```
+
+## Key Components
+
+### VADState
+
+States detected by VAD:
+
+```python
+from vad import VADState
+
+SILENCE       # No speech detected
+SPEECH_START  # Speech just started
+SPEAKING      # Currently speaking
+SPEECH_END    # Speech just ended
+```
+
+### VADResult
+
+Detection result structure:
+
+```python
+from vad import VADResult
+
+result = VADResult(
+    is_speech: bool              # Whether speech detected
+    confidence: float             # Detection confidence (0-1)
+    state: VADState              # Current state
+    speech_duration: Optional[float] = None
+    silence_duration: Optional[float] = None
+)
+```
+
+### VADetector
+
+Abstract base class:
+
+```python
+from vad import VADetector
+
+class MyVAD(VADetector):
+    def load_model(self) -> bool:
+        """Load detection model"""
+        return True
+
+    def detect(self, audio_chunk: bytes) -> VADResult:
+        """Detect speech in audio chunk"""
+        pass
+
+    def reset(self) -> None:
+        """Reset VAD state"""
+        pass
+```
+
+## VAD Engines
+
+### Silero VAD (Default)
+
+```python
+from vad import SileroVAD
+
+vad = SileroVAD({
+    "threshold": 0.5,
+    "min_speech_duration": 0.25,
+    "min_silence_duration": 0.5,
+    "sample_rate": 16000,
+})
+
+vad.load_model()
+result = vad.detect(audio_chunk)
+vad.reset()
+```
+
+### TEN-VAD
+
+```python
+from vad import TENVAD
+
+vad = TENVAD({
+    "threshold": 0.5,
+    "use_onnx": True,
+})
+
+vad.load_model()
+result = vad.detect(audio_chunk)
+```
+
+### SimpleVAD (Fallback)
+
+```python
+from vad import SimpleVAD
+
+vad = SimpleVAD({
+    "threshold": 0.5,
+    "energy_threshold": 0.02,
+})
+# No model loading needed
+result = vad.detect(audio_chunk)
+```
+
+## Factory Function
+
+```python
+from vad import create_vad_engine
+
+# Create by engine type
+silero_vad = create_vad_engine("silero")
+ten_vad = create_vad_engine("ten_vad")
+simple_vad = create_vad_engine("simple")
+
+# With config
+vad = create_vad_engine("silero", {"threshold": 0.6})
+```
+
+## Usage Example
+
+```python
+import asyncio
+from vad import SileroVAD
+
+async def main():
+    vad = SileroVAD()
+    vad.load_model()
+
+    # Detect speech
+    audio = get_audio_chunk()
+    result = vad.detect(audio)
+
+    if result.is_speech:
+        print(f"Speech detected: {result.confidence:.2f}")
+
+    if result.state == VADState.SPEECH_START:
+        print("User started speaking")
+
+    if result.state == VADState.SPEECH_END:
+        print(f"Speech ended after {result.speech_duration:.2f}s")
+
+    vad.reset()
+
+asyncio.run(main())
+```
+
+## Testing
+
+```bash
+pytest tests/unit/test_vad.py -v          # VAD tests
+pytest tests/unit/test_ten_vad.py -v     # TEN-VAD tests
+```
+
+## Dependencies
+
+- `torch` - For Silero VAD
+- `onnxruntime` - For TEN-VAD (optional)
+- `numpy` - Audio processing
+
+## Configuration Options
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `threshold` | 0.5 | Speech detection threshold (0-1) |
+| `min_speech_duration` | 0.25s | Min speech to trigger |
+| `min_silence_duration` | 0.5s | Min silence to end speech |
+| `sample_rate` | 16000 | Audio sample rate |
+| `energy_threshold` | 0.02 | SimpleVAD energy threshold |
+
+## Phase Progress
+
+| Phase | Status | Tests | Key Changes |
+|-------|--------|-------|-------------|
+| Phase 1 | ✅ Complete | 55/55 | Infrastructure (base.py, silero.py) |
+| Phase 2 | ✅ Complete | 75/76 | TEN-VAD, SimpleVAD, Factory |
+
+
 <claude-mem-context>
 # Recent Activity
 
@@ -7,8 +195,5 @@
 
 | ID | Time | T | Title | Read |
 |----|------|---|-------|------|
-| #175 | 9:30 AM | 🔄 | Phase 1 infrastructure refactoring complete | ~305 |
-| #166 | 9:22 AM | 🟣 | Created SileroVAD implementation | ~284 |
-| #165 | " | 🟣 | VAD base interface implementation started | ~273 |
 | #163 | 9:21 AM | 🟣 | Created VAD module structure with SileroVAD implementation | ~204 |
 </claude-mem-context>

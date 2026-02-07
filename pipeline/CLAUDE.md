@@ -1,3 +1,133 @@
+# Pipeline Module
+
+## Overview
+
+The pipeline module provides streaming pipeline orchestration for the v2.0 real-time voice conversation system.
+
+## Structure
+
+```
+pipeline/
+├── __init__.py         # Module exports
+├── state.py            # PipelineState, PipelineEvent, PipelineContext
+├── orchestrator.py      # StreamOrchestrator main class
+└── CLAUDE.md          # This file
+```
+
+## Key Components
+
+### PipelineState
+
+State machine states for the conversation pipeline:
+
+```python
+from pipeline.state import PipelineState
+
+IDLE        # System idle
+LISTENING   # Listening for user input
+PROCESSING   # ASR/LLM/TTS processing
+SPEAKING    # Playing TTS audio
+INTERRUPTED # User interrupted
+ERROR       # Error occurred
+```
+
+### PipelineEvent
+
+Events that trigger state transitions:
+
+```python
+from pipeline.state import PipelineEvent
+
+# VAD events
+SPEECH_STARTED, SPEECH_ENDED, INTERRUPTION_DETECTED
+
+# ASR events
+ASR_PARTIAL, ASR_COMPLETE, ASR_ERROR
+
+# LLM events
+LLM_TOKEN, LLM_COMPLETE, LLM_ERROR
+
+# TTS events
+TTS_AUDIO, TTS_SENTENCE_END, TTS_COMPLETE, TTS_ERROR
+
+# System events
+START, STOP, RESET
+```
+
+### StreamOrchestrator
+
+Main orchestrator class:
+
+```python
+from pipeline import StreamOrchestrator, PipelineConfig
+
+config = PipelineConfig(
+    enable_parallel=True,
+    buffer_pre_speech=1.0,
+    max_latency=10.0,
+)
+
+orchestrator = StreamOrchestrator(
+    config=config,
+    asr_engine=asr,
+    llm_engine=llm,
+    tts_engine=tts,
+    vad_engine=vad,
+)
+
+# Start pipeline
+await orchestrator.start()
+
+# Process audio
+result = await orchestrator.process(audio_data)
+
+# Get state
+state = orchestrator.state  # PipelineState
+
+# Interrupt
+await orchestrator.interrupt()
+
+# Stop pipeline
+await orchestrator.stop()
+```
+
+## Usage
+
+```python
+import asyncio
+from pipeline import StreamOrchestrator
+
+async def main():
+    orchestrator = StreamOrchestrator()
+
+    # Set callbacks
+    orchestrator.set_callbacks(
+        on_state_change=lambda s: print(f"State: {s}"),
+        on_result=lambda r: print(f"Result: {r.response}"),
+        on_error=lambda e: print(f"Error: {e}"),
+    )
+
+    # Start
+    await orchestrator.start()
+
+    # Process
+    audio = get_audio_from_microphone()
+    result = await orchestrator.process(audio)
+
+    # Stop
+    await orchestrator.stop()
+
+asyncio.run(main())
+```
+
+## Testing
+
+```bash
+pytest tests/unit/test_state.py -v       # State machine tests
+pytest tests/unit/test_orchestrator.py -v # Orchestrator tests
+```
+
+
 <claude-mem-context>
 # Recent Activity
 
