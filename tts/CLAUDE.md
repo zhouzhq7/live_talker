@@ -7,6 +7,11 @@
 
 | ID | Time | T | Title | Read |
 |----|------|---|-------|------|
+| #254 | 10:32 AM | 🔴 | Fixed async generator signature in TTS base class | ~203 |
+| #252 | " | 🟣 | Edge-TTS streaming synthesis added | ~214 |
+| #251 | 10:31 AM | 🟣 | Edge-TTS streaming support preparation | ~176 |
+| #250 | " | 🟣 | Streaming TTS capability added to BaseTTS | ~268 |
+| #249 | " | 🟣 | TTSResult NamedTuple added to base interface | ~212 |
 | #174 | 9:30 AM | 🟣 | Audio pipeline enhancement with AEC, buffering, and VAD | ~310 |
 | #157 | 8:49 AM | ✅ | Added Claude.md documentation files to Live Talker modules | ~206 |
 | #155 | 8:48 AM | ✅ | Module-level CLAUDE.md documentation created | ~253 |

@@ -3,10 +3,18 @@ Base TTS Interface
 """
 
 from abc import ABC, abstractmethod
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, NamedTuple, AsyncGenerator
 import logging
 
 logger = logging.getLogger(__name__)
+
+
+class TTSResult(NamedTuple):
+    """TTS 合成结果"""
+    audio_chunk: bytes               # 音频数据
+    text: str                        # 对应的文本
+    is_final: bool                   # 是否是最终结果
+    sample_rate: int = 16000         # 采样率
 
 
 class BaseTTS(ABC):
@@ -37,15 +45,70 @@ class BaseTTS(ABC):
     ) -> bytes:
         """
         Synthesize speech from text
-        
+
         Args:
             text: Text to synthesize
             output_file: Optional file path to save audio
-            
+
         Returns:
             Audio data as bytes (16-bit PCM)
         """
         pass
+
+    async def synthesize_stream(
+        self,
+        text_stream: AsyncGenerator[str, None]
+    ) -> AsyncGenerator[TTSResult, None]:
+        """
+        Stream synthesis - synthesize text chunks as they arrive
+
+        Args:
+            text_stream: Async generator of text chunks
+
+        Yields:
+            TTSResult: Audio chunk with metadata
+        """
+        # Default implementation: collect all text and synthesize
+        full_text = ""
+        async for text_chunk in text_stream:
+            full_text += text_chunk
+
+        if full_text:
+            audio = self.synthesize(full_text)
+            if audio:
+                yield TTSResult(
+                    audio_chunk=audio,
+                    text=full_text,
+                    is_final=True
+                )
+
+    def _split_sentences(self, text: str) -> list:
+        """
+        Split text into sentence-like chunks for streaming
+
+        Args:
+            text: Input text
+
+        Returns:
+            List of text chunks
+        """
+        import re
+        # Split on common sentence boundaries
+        sentences = re.split(r'([。！？；\n]+)', text)
+        chunks = []
+        current = ""
+
+        for part in sentences:
+            current += part
+            if len(current) >= 50 or (part in '。！？；\n' and current.strip()):
+                if current.strip():
+                    chunks.append(current.strip())
+                current = ""
+
+        if current.strip():
+            chunks.append(current.strip())
+
+        return chunks
     
     def synthesize_to_file(
         self,

@@ -6,8 +6,8 @@ Microsoft Edge TTS (free, high quality)
 import logging
 import asyncio
 import io
-from typing import Optional
-from .base import BaseTTS
+from typing import Optional, AsyncGenerator
+from .base import BaseTTS, TTSResult
 
 logger = logging.getLogger(__name__)
 
@@ -198,4 +198,51 @@ class EdgeTTS(BaseTTS):
             "volume": self.volume
         })
         return info
+
+    async def synthesize_stream(
+        self,
+        text_stream: AsyncGenerator[str, None]
+    ) -> AsyncGenerator[TTSResult, None]:
+        """
+        Stream synthesis using Edge-TTS
+
+        Args:
+            text_stream: Async generator of text chunks
+
+        Yields:
+            TTSResult: Audio chunk with metadata
+        """
+        if not self._is_initialized:
+            logger.error(f"[{self.name}] Not initialized")
+            return
+
+        full_text = ""
+        async for text_chunk in text_stream:
+            full_text += text_chunk
+
+            # Process complete sentences
+            sentences = self._split_sentences(full_text)
+            if len(sentences) > 1:
+                # Process all but the last incomplete sentence
+                for sentence in sentences[:-1]:
+                    if sentence.strip():
+                        audio = await self._synthesize_async(sentence.strip())
+                        if audio:
+                            yield TTSResult(
+                                audio_chunk=audio,
+                                text=sentence.strip(),
+                                is_final=False
+                            )
+                # Keep the last sentence for further processing
+                full_text = sentences[-1]
+
+        # Process remaining text as final
+        if full_text.strip():
+            audio = await self._synthesize_async(full_text.strip())
+            if audio:
+                yield TTSResult(
+                    audio_chunk=audio,
+                    text=full_text.strip(),
+                    is_final=True
+                )
 
