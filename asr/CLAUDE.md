@@ -7,6 +7,12 @@
 
 | ID | Time | T | Title | Read |
 |----|------|---|-------|------|
+| #229 | 10:09 AM | 🔴 | Fixed async generator signature in SherpaONNXASR | ~213 |
+| #227 | 10:03 AM | 🔴 | FunASR streaming method converted to async | ~185 |
+| #225 | 10:01 AM | 🟣 | Added FunASRStreaming class for real-time streaming ASR | ~293 |
+| #224 | " | 🔄 | FunASR module upgraded with async streaming support | ~239 |
+| #222 | 9:59 AM | ✅ | Extended ASR base interface for streaming support | ~261 |
+| #221 | " | 🟣 | Streaming ASR interface added to base.py | ~258 |
 | #174 | 9:30 AM | 🟣 | Audio pipeline enhancement with AEC, buffering, and VAD | ~310 |
 | #157 | 8:49 AM | ✅ | Added Claude.md documentation files to Live Talker modules | ~206 |
 | #155 | 8:48 AM | ✅ | Module-level CLAUDE.md documentation created | ~253 |

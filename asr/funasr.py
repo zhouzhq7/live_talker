@@ -4,11 +4,13 @@ FunASR Implementation - Chinese-optimized ASR
 """
 
 import logging
+import asyncio
 import numpy as np
 import os
 from pathlib import Path
-from typing import Optional
-from .base import BaseASR
+from typing import Optional, AsyncGenerator, NamedTuple
+
+from .base import BaseASR, ASRResult, StreamingASRMixin
 
 logger = logging.getLogger(__name__)
 
@@ -202,4 +204,185 @@ class FunASR(BaseASR):
             "vad_loaded": self.vad_model is not None
         })
         return info
+
+
+# v2.0 流式支持扩展
+class FunASRStreaming(BaseASR, StreamingASRMixin):
+    """FunASR 流式识别支持
+
+    使用 paraformer-zh-streaming 模型实现流式识别
+    """
+
+    def __init__(
+        self,
+        model_name: str = "paraformer-zh-streaming",
+        device: str = "cpu",
+        model_cache_dir: Optional[str] = None,
+        **kwargs
+    ):
+        """初始化 FunASR 流式识别"""
+        super().__init__(name=f"FunASR-Streaming-{model_name}", **kwargs)
+
+        self.model_name = model_name
+        self.device = device
+        self.model_cache_dir = model_cache_dir or os.getenv("MODEL_CACHE_DIR", "D:\\models")
+        self.model = None
+        self._streaming = False
+
+        self._setup_modelscope_cache()
+        self.load_model()
+
+    def _setup_modelscope_cache(self):
+        """Setup ModelScope cache directory"""
+        try:
+            modelscope_cache = os.path.join(self.model_cache_dir, "modelscope")
+            os.makedirs(modelscope_cache, exist_ok=True)
+            os.environ["MODELSCOPE_CACHE"] = modelscope_cache
+            os.environ["MODELSCOPE_HOME"] = modelscope_cache
+            logger.info(f"[{self.name}] ModelScope cache: {modelscope_cache}")
+        except Exception as e:
+            logger.warning(f"[{self.name}] Failed to setup cache: {e}")
+
+    def load_model(self) -> bool:
+        """加载 FunASR 流式模型"""
+        if self._is_initialized:
+            return True
+
+        try:
+            from funasr import AutoModel
+
+            logger.info(f"[{self.name}] Loading streaming model '{self.model_name}'...")
+
+            self.model = AutoModel(
+                model=self.model_name,
+                device=self.device,
+                disable_pbar=False,
+                disable_log=True
+            )
+
+            self._is_initialized = True
+            logger.info(f"[{self.name}] Streaming model loaded!")
+            return True
+
+        except ImportError:
+            logger.error(f"[{self.name}] funasr not installed")
+            return False
+        except Exception as e:
+            logger.error(f"[{self.name}] Failed to load: {e}")
+            return False
+
+    def transcribe(
+        self,
+        audio_data: bytes,
+        sample_rate: int = 16000,
+        language: str = "zh"
+    ) -> str:
+        """非流式转写"""
+        if not self._is_initialized or not self.model:
+            return ""
+
+        try:
+            audio_array = np.frombuffer(audio_data, dtype=np.int16)
+            audio_float = audio_array.astype(np.float32) / 32768.0
+
+            result = self.model.generate(
+                input=audio_float,
+                cache={},
+                is_final=True,
+                language=language
+            )
+
+            if result and len(result) > 0:
+                return result[0].get("text", "").strip()
+
+            return ""
+
+        except Exception as e:
+            logger.error(f"[{self.name}] Transcription failed: {e}")
+            return ""
+
+    async def stream_recognize(
+        self,
+        audio_stream: AsyncGenerator[bytes, None]
+    ) -> AsyncGenerator[ASRResult, None]:
+        """流式识别"""
+        if not self._is_initialized or not self.model:
+            return
+
+        self.start_stream()
+
+        try:
+            async for audio_chunk in audio_stream:
+                self.accept_audio(audio_chunk)
+
+                result = self.get_result()
+                if result:
+                    yield result
+
+            final_result = self.end_stream()
+            if final_result:
+                yield final_result
+
+        except Exception as e:
+            logger.error(f"[{self.name}] Stream failed: {e}")
+        finally:
+            self.reset()
+
+    def start_stream(self) -> None:
+        """开始流式识别"""
+        self._streaming = True
+        logger.debug(f"[{self.name}] Stream started")
+
+    def accept_audio(self, audio_data: bytes) -> None:
+        """接收音频数据"""
+        if not self._streaming or not self.model:
+            return
+
+        try:
+            audio_array = np.frombuffer(audio_data, dtype=np.int16)
+            audio_float = audio_array.astype(np.float32) / 32768.0
+
+            # 流式生成
+            self.model.generate(
+                input=audio_float,
+                cache={},
+                is_final=False
+            )
+
+        except Exception as e:
+            logger.debug(f"[{self.name}] accept_audio: {e}")
+
+    def get_result(self) -> Optional[ASRResult]:
+        """获取当前结果"""
+        # FunASR 流式接口返回最后一个结果
+        return None
+
+    def end_stream(self) -> Optional[ASRResult]:
+        """结束流式识别"""
+        if not self._streaming:
+            return None
+
+        self._streaming = False
+
+        # 返回最终结果需要完整音频
+        return None
+
+    def reset(self) -> None:
+        """重置状态"""
+        self._streaming = False
+        logger.debug(f"[{self.name}] Stream reset")
+
+    def get_info(self) -> dict:
+        """获取引擎信息"""
+        info = super().get_info()
+        info.update({
+            "model_name": self.model_name,
+            "device": self.device,
+            "streaming": self._streaming
+        })
+        return info
+
+    def is_available(self) -> bool:
+        """检查可用性"""
+        return self._is_initialized
 

@@ -4,11 +4,20 @@ Base ASR Interface
 """
 
 from abc import ABC, abstractmethod
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, NamedTuple, AsyncGenerator
 import time
 import logging
 
 logger = logging.getLogger(__name__)
+
+
+class ASRResult(NamedTuple):
+    """ASR 识别结果"""
+    text: str                      # 识别的文本
+    is_final: bool                # 是否是最终结果
+    confidence: float = 0.0       # 置信度 0-1
+    timestamp_start: int = 0      # 开始时间戳 (ms)
+    timestamp_end: int = 0        # 结束时间戳 (ms)
 
 
 class BaseASR(ABC):
@@ -156,4 +165,64 @@ class BaseASR(ABC):
     
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(name='{self.name}')"
+
+
+# 流式 ASR 接口 (v2.0)
+class StreamingASRMixin(ABC):
+    """流式 ASR 混合类
+
+    提供流式识别接口，增量输出识别结果
+    """
+
+    @abstractmethod
+    def stream_recognize(
+        self,
+        audio_stream: AsyncGenerator[bytes, None]
+    ) -> AsyncGenerator[ASRResult, None]:
+        """流式识别
+
+        Args:
+            audio_stream: 音频流生成器
+
+        Yields:
+            ASRResult: 识别结果
+        """
+        pass
+
+    @abstractmethod
+    def start_stream(self) -> None:
+        """开始流式识别会话"""
+        pass
+
+    @abstractmethod
+    def accept_audio(self, audio_data: bytes) -> None:
+        """接收音频数据
+
+        Args:
+            audio_data: 音频数据
+        """
+        pass
+
+    @abstractmethod
+    def get_result(self) -> Optional[ASRResult]:
+        """获取当前结果
+
+        Returns:
+            Optional[ASRResult]: 当前识别结果，None 表示无结果
+        """
+        pass
+
+    @abstractmethod
+    def end_stream(self) -> Optional[ASRResult]:
+        """结束流式识别
+
+        Returns:
+            Optional[ASRResult]: 最终识别结果
+        """
+        pass
+
+    @abstractmethod
+    def reset(self) -> None:
+        """重置流式识别状态"""
+        pass
 

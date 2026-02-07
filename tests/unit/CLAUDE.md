@@ -7,6 +7,8 @@
 
 | ID | Time | T | Title | Read |
 |----|------|---|-------|------|
+| #226 | 10:02 AM | 🟣 | ASR unit test suite created | ~293 |
 | #194 | 9:39 AM | ✅ | Added clarifying comment to test_reset | ~179 |
+| #193 | " | 🔴 | Fixed audio buffer test assertion | ~231 |
 | #180 | 9:35 AM | 🟣 | Created unit tests for pipeline state machine | ~377 |
 </claude-mem-context>
