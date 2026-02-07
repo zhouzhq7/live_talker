@@ -138,6 +138,10 @@ class TestSherpaONNXASR:
 
     def test_streaming_state(self, sherpa_asr):
         """Test streaming state management"""
+        # Skip if no model loaded (requires actual ONNX model files)
+        if not sherpa_asr._is_initialized:
+            pytest.skip("SherpaONNX model not loaded (requires ONNX model files)")
+
         assert sherpa_asr._streaming is False
 
         sherpa_asr.start_stream()
