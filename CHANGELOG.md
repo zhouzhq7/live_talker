@@ -4,6 +4,34 @@ All notable changes to this project will be documented in this file.
 
 ## [2.0.0] - 2025-02-07
 
+### Phase 2: TTS Upgrade - MeloTTS ✅
+
+#### Added
+- **MeloTTS** - Fully open source TTS engine (default)
+  - No FFmpeg dependency required
+  - Supports ZH, EN, ES, FR, JP, KR languages
+  - Chinese-English mixed synthesis
+  - Speed adjustment (0.5x - 2.0x)
+  - Completely offline operation
+  - ~300MB model size
+
+#### Changed
+- **Default TTS engine** changed from `edge` to `melotts`
+- Updated `config.py` with MeloTTS configuration:
+  - `melotts_language`: Language code (ZH/EN/ES/FR/JP/KR)
+  - `melotts_speaker`: Speaker ID
+  - `melotts_speed`: Speech speed (0.5 - 2.0)
+- Edge-TTS is now optional (no longer requires FFmpeg)
+
+#### Tests
+- Added 22 unit tests for MeloTTS
+- All tests passing ✅
+
+#### Documentation
+- Updated README.md with MeloTTS features
+- Added migration guide from Edge-TTS to MeloTTS
+- Updated installation instructions (FFmpeg no longer required)
+
 ### Phase 1: ASR Upgrade - SenseVoice ✅
 
 #### Added

@@ -25,7 +25,8 @@ When encountering issues, you can check the debug logs output in the terminal to
 
 - 🎤 **Real-time Speech Recognition (ASR)** - Supports SenseVoice (default), FunASR, Whisper, FireRedASR
   - **SenseVoice**: Alibaba's latest model with emotion recognition and 50+ language support
-- 🔊 **Text-to-Speech (TTS)** - Supports Edge-TTS, Pyttsx3
+- 🔊 **Text-to-Speech (TTS)** - Supports MeloTTS (default, no FFmpeg), Edge-TTS, Pyttsx3
+  - **MeloTTS**: Fully open source, supports ZH/EN/ES/FR/JP/KR, no FFmpeg required
 - 🎯 **Voice Activity Detection (VAD)** - Automatic segmentation, interruption detection
 - 🤖 **Intelligent Conversation (LLM)** - Deepseek API integration
 - ⚡ **Low Latency** - Optimized real-time processing pipeline
@@ -39,7 +40,10 @@ When encountering issues, you can check the debug logs output in the terminal to
 - [ ] Support for more LLM providers (OpenAI, Anthropic, etc.)
 - [ ] Web-based GUI client
 - [x] SenseVoice ASR with emotion recognition (Phase 1 ✓)
-- [ ] MeloTTS for open-source TTS (Phase 2)
+- [x] MeloTTS for open-source TTS (Phase 2 ✓)
+  - No FFmpeg dependency
+  - Fully offline
+  - Multilingual support (ZH/EN/ES/FR/JP/KR)
 - [ ] TEN-VAD for better VAD (Phase 3)
 - [ ] Ollama local LLM support (Phase 4)
 - [ ] Streaming pipeline for <1s latency (Phase 5)
@@ -74,7 +78,9 @@ conda install -c conda-forge ffmpeg
 pip install -r requirements.txt
 ```
 
-**Note**: Edge-TTS requires FFmpeg to convert MP3 to PCM format. If FFmpeg is not installed, you will encounter a `ffprobe` not found error.
+**Note**: 
+- **MeloTTS** (default) does NOT require FFmpeg - fully open source!
+- Edge-TTS (optional) requires FFmpeg to convert MP3 to PCM format.
 
 ### Configure Environment Variables
 
@@ -134,7 +140,7 @@ export DEEPSEEK_API_KEY="your-api-key"
 export ASR_ENGINE="sensevoice"  # sensevoice (default), funasr, whisper, fireredasr
 
 # TTS engine selection
-export TTS_ENGINE="edge"    # edge, pyttsx3
+export TTS_ENGINE="melotts" # melotts (default), edge, pyttsx3
 
 # Model cache directory (default: D:\models)
 export MODEL_CACHE_DIR="D:\\models"

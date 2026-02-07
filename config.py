@@ -57,9 +57,14 @@ class ASRConfig:
 @dataclass
 class TTSConfig:
     """TTS configuration"""
-    engine: str = "edge"            # edge, pyttsx3
+    engine: str = "melotts"         # melotts (default), edge, pyttsx3
     
-    # Edge-TTS settings
+    # MeloTTS settings (default)
+    melotts_language: str = "ZH"    # ZH, EN, ES, FR, JP, KR
+    melotts_speaker: str = "ZH"     # Speaker ID
+    melotts_speed: float = 1.0      # Speed: 0.5 - 2.0
+    
+    # Edge-TTS settings (optional)
     edge_voice: str = "zh-CN-XiaoxiaoNeural"
     edge_rate: str = "+0%"
     edge_volume: str = "+0%"

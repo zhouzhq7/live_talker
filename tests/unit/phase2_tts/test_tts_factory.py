@@ -68,15 +68,22 @@ class TestTTSFactory:
             assert result == mock_instance
     
     def test_create_tts_invalid_engine(self):
-        """Test creating TTS with invalid engine"""
-        from core.talker import LiveTalker
-        
-        talker = LiveTalker.__new__(LiveTalker)
-        talker.config = MagicMock()
-        talker.config.tts.engine = "invalid"
-        
-        with pytest.raises(ValueError):
-            talker._create_tts()
+        """Test creating TTS with invalid engine defaults to MeloTTS"""
+        with patch('core.talker.MeloTTS') as mock_melotts:
+            mock_instance = MagicMock()
+            mock_melotts.return_value = mock_instance
+            
+            from core.talker import LiveTalker
+            
+            talker = LiveTalker.__new__(LiveTalker)
+            talker.config = MagicMock()
+            talker.config.tts.engine = "invalid"
+            
+            result = talker._create_tts()
+            
+            # Should fallback to MeloTTS
+            mock_melotts.assert_called_once()
+            assert result == mock_instance
 
 
 @pytest.mark.phase2

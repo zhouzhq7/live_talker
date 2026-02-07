@@ -10,7 +10,7 @@ from typing import Optional
 from config import TalkerConfig
 from audio import RealtimeRecorder, VADDetector, AudioPlayer
 from asr import BaseASR, SenseVoice, FunASR, Whisper, FireRedASR
-from tts import BaseTTS, EdgeTTS, Pyttsx3TTS
+from tts import BaseTTS, MeloTTS, EdgeTTS, Pyttsx3TTS
 from llm import BaseLLM, DeepseekLLM
 from core.conversation import ConversationManager
 
@@ -145,7 +145,14 @@ class LiveTalker:
         """Create TTS engine based on config"""
         engine = self.config.tts.engine.lower()
         
-        if engine == "edge":
+        if engine == "melotts":
+            return MeloTTS(
+                language=self.config.tts.melotts_language,
+                speaker=self.config.tts.melotts_speaker,
+                speed=self.config.tts.melotts_speed,
+                model_cache_dir=self.config.model_cache_dir
+            )
+        elif engine == "edge":
             return EdgeTTS(
                 voice=self.config.tts.edge_voice,
                 rate=self.config.tts.edge_rate,
@@ -157,8 +164,8 @@ class LiveTalker:
                 volume=self.config.tts.pyttsx3_volume
             )
         else:
-            logger.warning(f"Unknown TTS engine: {engine}, using Edge-TTS")
-            return EdgeTTS()
+            logger.warning(f"Unknown TTS engine: {engine}, using MeloTTS")
+            return MeloTTS()
     
     def _create_llm(self) -> BaseLLM:
         """Create LLM provider based on config"""
