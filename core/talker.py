@@ -9,7 +9,7 @@ import threading
 from typing import Optional
 from config import TalkerConfig
 from audio import RealtimeRecorder, VADDetector, AudioPlayer
-from asr import BaseASR, FunASR, Whisper, FireRedASR
+from asr import BaseASR, SenseVoice, FunASR, Whisper, FireRedASR
 from tts import BaseTTS, EdgeTTS, Pyttsx3TTS
 from llm import BaseLLM, DeepseekLLM
 from core.conversation import ConversationManager
@@ -111,7 +111,15 @@ class LiveTalker:
         """Create ASR engine based on config"""
         engine = self.config.asr.engine.lower()
         
-        if engine == "funasr":
+        if engine == "sensevoice":
+            return SenseVoice(
+                model_name=self.config.asr.sensevoice_model,
+                device=self.config.asr.sensevoice_device,
+                language=self.config.asr.sensevoice_language,
+                enable_vad=self.config.asr.sensevoice_enable_vad,
+                model_cache_dir=self.config.model_cache_dir
+            )
+        elif engine == "funasr":
             return FunASR(
                 model_name=self.config.asr.funasr_model,
                 device=self.config.asr.funasr_device,
@@ -130,8 +138,8 @@ class LiveTalker:
                 device=self.config.asr.fireredasr_device
             )
         else:
-            logger.warning(f"Unknown ASR engine: {engine}, using FunASR")
-            return FunASR(model_cache_dir=self.config.model_cache_dir)
+            logger.warning(f"Unknown ASR engine: {engine}, using SenseVoice")
+            return SenseVoice(model_cache_dir=self.config.model_cache_dir)
     
     def _create_tts(self) -> BaseTTS:
         """Create TTS engine based on config"""

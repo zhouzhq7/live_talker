@@ -7,6 +7,7 @@ Use -m "not slow" to skip these tests.
 
 import pytest
 import numpy as np
+from unittest.mock import patch
 
 
 @pytest.mark.phase1
@@ -60,9 +61,9 @@ class TestASRIntegration:
         from core.talker import LiveTalker
         from config import TalkerConfig
         
-        with patch('core.talker.FunASR', return_value=mock_asr):
+        with patch('core.talker.SenseVoice', return_value=mock_asr):
             config = TalkerConfig()
-            config.asr.engine = "funasr"
+            config.asr.engine = "sensevoice"
             
             talker = LiveTalker.__new__(LiveTalker)
             talker.config = config

@@ -29,7 +29,13 @@ class AudioConfig:
 @dataclass
 class ASRConfig:
     """ASR configuration"""
-    engine: str = "funasr"          # funasr, whisper, fireredasr
+    engine: str = "sensevoice"      # sensevoice, funasr, whisper, fireredasr
+    
+    # SenseVoice settings (default)
+    sensevoice_model: str = "iic/SenseVoiceSmall"
+    sensevoice_device: str = "cpu"
+    sensevoice_language: str = "auto"  # auto, zh, en, yue, ja, ko, nospeech
+    sensevoice_enable_vad: bool = True
     
     # FunASR settings
     funasr_model: str = "paraformer-zh"

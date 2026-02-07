@@ -26,6 +26,8 @@ class TestASRFactory:
             talker.config.asr.engine = "sensevoice"
             talker.config.asr.sensevoice_model = "iic/SenseVoiceSmall"
             talker.config.asr.sensevoice_device = "cpu"
+            talker.config.asr.sensevoice_language = "auto"
+            talker.config.asr.sensevoice_enable_vad = True
             talker.config.model_cache_dir = "/tmp/models"
             
             result = talker._create_asr()
@@ -46,6 +48,7 @@ class TestASRFactory:
             talker.config.asr.engine = "funasr"
             talker.config.asr.funasr_model = "paraformer-zh"
             talker.config.asr.funasr_device = "cpu"
+            talker.config.asr.funasr_enable_vad = False
             talker.config.model_cache_dir = "/tmp/models"
             
             result = talker._create_asr()
@@ -55,7 +58,7 @@ class TestASRFactory:
     
     def test_create_asr_whisper(self):
         """Test creating Whisper ASR through factory"""
-        with patch('core.talker.WhisperASR') as mock_whisper:
+        with patch('core.talker.Whisper') as mock_whisper:
             mock_instance = MagicMock()
             mock_whisper.return_value = mock_instance
             
@@ -66,6 +69,7 @@ class TestASRFactory:
             talker.config.asr.engine = "whisper"
             talker.config.asr.whisper_model = "base"
             talker.config.asr.whisper_device = "cpu"
+            talker.config.model_cache_dir = "/tmp/models"
             
             result = talker._create_asr()
             
@@ -73,15 +77,23 @@ class TestASRFactory:
             assert result == mock_instance
     
     def test_create_asr_invalid_engine(self):
-        """Test creating ASR with invalid engine"""
-        from core.talker import LiveTalker
-        
-        talker = LiveTalker.__new__(LiveTalker)
-        talker.config = MagicMock()
-        talker.config.asr.engine = "invalid"
-        
-        with pytest.raises(ValueError):
-            talker._create_asr()
+        """Test creating ASR with invalid engine defaults to SenseVoice"""
+        with patch('core.talker.SenseVoice') as mock_sensevoice:
+            mock_instance = MagicMock()
+            mock_sensevoice.return_value = mock_instance
+            
+            from core.talker import LiveTalker
+            
+            talker = LiveTalker.__new__(LiveTalker)
+            talker.config = MagicMock()
+            talker.config.asr.engine = "invalid"
+            talker.config.model_cache_dir = "/tmp/models"
+            
+            result = talker._create_asr()
+            
+            # Should fallback to SenseVoice
+            mock_sensevoice.assert_called_once()
+            assert result == mock_instance
 
 
 @pytest.mark.phase1

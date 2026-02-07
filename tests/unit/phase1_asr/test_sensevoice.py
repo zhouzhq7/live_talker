@@ -25,7 +25,7 @@ class TestSenseVoice:
     @pytest.fixture
     def mock_funasr(self):
         """Mock FunASR AutoModel"""
-        with patch('asr.sensevoice.AutoModel') as mock:
+        with patch('funasr.AutoModel') as mock:
             model_instance = MagicMock()
             model_instance.generate.return_value = [{"text": "你好世界"}]
             mock.return_value = model_instance
@@ -41,7 +41,8 @@ class TestSenseVoice:
             assert asr.name == "SenseVoice"
             assert asr.model_name == "iic/SenseVoiceSmall"
             assert asr.device == "cpu"
-            assert not asr._is_initialized
+            # When mocked, model loads successfully during init
+            assert asr._is_initialized is True
     
     def test_sensevoice_init_with_cache_dir(self, sensevoice_class, mock_funasr):
         """Test initialization with custom cache directory"""
@@ -51,7 +52,7 @@ class TestSenseVoice:
                 device="cpu",
                 model_cache_dir="/tmp/models"
             )
-            assert "MODELSCOPE_CACHE" in asr.__dict__ or True  # Check if env was set
+            assert asr.model_cache_dir == "/tmp/models"
     
     def test_load_model_success(self, sensevoice_class, mock_funasr):
         """Test successful model loading"""
@@ -64,7 +65,7 @@ class TestSenseVoice:
     
     def test_load_model_failure(self, sensevoice_class):
         """Test model loading failure"""
-        with patch('asr.sensevoice.AutoModel', side_effect=Exception("Model not found")):
+        with patch('funasr.AutoModel', side_effect=Exception("Model not found")):
             asr = sensevoice_class(device="cpu")
             result = asr.load_model()
             assert result is False
@@ -76,19 +77,18 @@ class TestSenseVoice:
             asr = sensevoice_class(device="cpu")
             asr.load_model()
             
-            # Mock file operations
-            with patch('builtins.open', mock_open()):
-                with patch('soundfile.write'):
-                    text = asr.transcribe(sample_audio_bytes_16k, sample_rate=16000)
-                    assert isinstance(text, str)
+            text = asr.transcribe(sample_audio_bytes_16k, sample_rate=16000)
+            assert isinstance(text, str)
     
     def test_transcribe_not_initialized(self, sensevoice_class, sample_audio_bytes_16k):
         """Test transcription when not initialized"""
         with patch.dict('os.environ', {}, clear=True):
-            asr = sensevoice_class(device="cpu")
-            # Don't load model
-            text = asr.transcribe(sample_audio_bytes_16k)
-            assert text == ""
+            with patch('funasr.AutoModel', side_effect=Exception("Model not found")):
+                asr = sensevoice_class(device="cpu")
+                # Model failed to load
+                assert asr._is_initialized is False
+                text = asr.transcribe(sample_audio_bytes_16k)
+                assert text == ""
     
     def test_transcribe_with_language(self, sensevoice_class, mock_funasr, sample_audio_bytes_16k):
         """Test transcription with specific language"""
@@ -96,14 +96,12 @@ class TestSenseVoice:
             asr = sensevoice_class(device="cpu")
             asr.load_model()
             
-            with patch('builtins.open', mock_open()):
-                with patch('soundfile.write'):
-                    text = asr.transcribe(
-                        sample_audio_bytes_16k,
-                        sample_rate=16000,
-                        language="zh"
-                    )
-                    assert isinstance(text, str)
+            text = asr.transcribe(
+                sample_audio_bytes_16k,
+                sample_rate=16000,
+                language="zh"
+            )
+            assert isinstance(text, str)
     
     def test_clean_emotion_tags(self, sensevoice_class, mock_funasr):
         """Test emotion tag cleaning"""
@@ -134,11 +132,9 @@ class TestSenseVoice:
                 "text": "<|HAPPY|><|Speech|>你好世界"
             }]
             
-            with patch('builtins.open', mock_open()):
-                with patch('soundfile.write'):
-                    text = asr.transcribe(sample_audio_bytes_16k)
-                    assert "<|" not in text  # Tags should be cleaned
-                    assert "你好" in text
+            text = asr.transcribe(sample_audio_bytes_16k)
+            assert "<|" not in text  # Tags should be cleaned
+            assert "你好" in text
     
     def test_get_info(self, sensevoice_class, mock_funasr):
         """Test get_info method"""
@@ -163,19 +159,17 @@ class TestSenseVoice:
             asr = sensevoice_class(device="cpu")
             asr.load_model()
             
-            with patch('builtins.open', mock_open()):
-                with patch('soundfile.write'):
-                    result = asr.transcribe_with_timing(
-                        sample_audio_bytes_16k,
-                        sample_rate=16000
-                    )
-                    
-                    assert "text" in result
-                    assert "latency_ms" in result
-                    assert "audio_duration_ms" in result
-                    assert "rtf" in result
-                    assert "engine" in result
-                    assert result["engine"] == "SenseVoice"
+            result = asr.transcribe_with_timing(
+                sample_audio_bytes_16k,
+                sample_rate=16000
+            )
+            
+            assert "text" in result
+            assert "latency_ms" in result
+            assert "audio_duration_ms" in result
+            assert "rtf" in result
+            assert "engine" in result
+            assert result["engine"] == "SenseVoice"
     
     def test_transcribe_empty_audio(self, sensevoice_class, mock_funasr):
         """Test transcription with empty audio"""
@@ -183,10 +177,8 @@ class TestSenseVoice:
             asr = sensevoice_class(device="cpu")
             asr.load_model()
             
-            with patch('builtins.open', mock_open()):
-                with patch('soundfile.write'):
-                    text = asr.transcribe(b"")
-                    assert text == ""
+            text = asr.transcribe(b"")
+            assert text == ""
     
     def test_transcribe_failure(self, sensevoice_class, mock_funasr, sample_audio_bytes_16k):
         """Test transcription failure handling"""
@@ -194,10 +186,11 @@ class TestSenseVoice:
             asr = sensevoice_class(device="cpu")
             asr.load_model()
             
-            # Make soundfile.write raise an exception
-            with patch('soundfile.write', side_effect=Exception("Write failed")):
-                text = asr.transcribe(sample_audio_bytes_16k)
-                assert text == ""
+            # Make model.generate raise an exception
+            asr.model.generate.side_effect = Exception("Generation failed")
+            
+            text = asr.transcribe(sample_audio_bytes_16k)
+            assert text == ""
     
     def test_warmup(self, sensevoice_class, mock_funasr):
         """Test warmup method"""
@@ -205,19 +198,46 @@ class TestSenseVoice:
             asr = sensevoice_class(device="cpu")
             asr.load_model()
             
-            with patch('builtins.open', mock_open()):
-                with patch('soundfile.write'):
-                    asr.warmup(num_iterations=2)
-                    assert asr._warmup_done is True
+            asr.warmup(num_iterations=2)
+            assert asr._warmup_done is True
     
     def test_is_available(self, sensevoice_class, mock_funasr):
         """Test is_available method"""
         with patch.dict('os.environ', {}, clear=True):
+            # With mock, model loads successfully
             asr = sensevoice_class(device="cpu")
-            assert asr.is_available() is False
+            assert asr.is_available() is True
             
+            # Test after explicit load
             asr.load_model()
             assert asr.is_available() is True
+    
+    def test_is_available_not_initialized(self, sensevoice_class):
+        """Test is_available when model fails to load"""
+        with patch.dict('os.environ', {}, clear=True):
+            with patch('funasr.AutoModel', side_effect=Exception("Model not found")):
+                asr = sensevoice_class(device="cpu")
+                assert asr.is_available() is False
+    
+    def test_transcribe_with_emotion_detection(self, sensevoice_class, mock_funasr, sample_audio_bytes_16k):
+        """Test transcribe with emotion detection"""
+        with patch.dict('os.environ', {}, clear=True):
+            asr = sensevoice_class(device="cpu")
+            asr.load_model()
+            
+            # Mock result with emotion tags
+            mock_funasr.return_value.generate.return_value = [{
+                "text": "<|HAPPY|><|Speech|>你好"
+            }]
+            
+            result = asr.transcribe_with_emotion(sample_audio_bytes_16k)
+            
+            assert "text" in result
+            assert "raw_text" in result
+            assert "emotion" in result
+            assert "event" in result
+            assert result["emotion"] == "HAPPY"
+            assert result["event"] == "Speech"
 
 
 @pytest.mark.phase1
@@ -231,7 +251,7 @@ class TestASRConfig:
         from config import ASRConfig
         
         config = ASRConfig()
-        assert config.engine == "funasr"  # Current default
+        assert config.engine == "sensevoice"  # Updated default
     
     def test_sensevoice_config(self):
         """Test SenseVoice-specific configuration"""
