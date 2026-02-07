@@ -4,8 +4,9 @@ Deepseek LLM Integration
 """
 
 import logging
-from typing import Optional, Iterator, List, Dict
-from .base import BaseLLM
+import asyncio
+from typing import Optional, Iterator, List, Dict, AsyncGenerator
+from .base import BaseLLM, LLMResult
 
 logger = logging.getLogger(__name__)
 
@@ -317,4 +318,38 @@ class DeepseekLLM(BaseLLM):
             "has_api_key": bool(self.api_key)
         })
         return info
+
+    async def _chat_stream_impl(
+        self,
+        messages: List[Dict[str, str]]
+    ) -> AsyncGenerator[str, None]:
+        """
+        Async streaming implementation for Deepseek
+
+        Args:
+            messages: List of message dicts
+
+        Yields:
+            Text chunks as they are generated
+        """
+        if not self._is_initialized:
+            logger.error(f"[{self.name}] Not initialized")
+            return
+
+        try:
+            stream = self.client.chat.completions.create(
+                model=self.model,
+                messages=messages,
+                temperature=self.temperature,
+                max_tokens=self.max_tokens,
+                stream=True
+            )
+
+            for chunk in stream:
+                if chunk.choices[0].delta.content:
+                    yield chunk.choices[0].delta.content
+
+        except Exception as e:
+            logger.error(f"[{self.name}] Async streaming failed: {e}")
+            return
 

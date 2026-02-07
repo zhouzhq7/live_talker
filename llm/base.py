@@ -3,10 +3,18 @@ Base LLM Interface
 """
 
 from abc import ABC, abstractmethod
-from typing import Optional, List, Dict, Any, Iterator
+from typing import Optional, List, Dict, Any, Iterator, NamedTuple, AsyncGenerator
 import logging
 
 logger = logging.getLogger(__name__)
+
+
+class LLMResult(NamedTuple):
+    """LLM 生成结果"""
+    token: str                      # 生成的 token/text
+    is_final: bool                  # 是否是最终结果
+    confidence: float = 0.0         # 置信度 0-1
+    stop_reason: Optional[str] = None  # 停止原因 (stop, length, etc.)
 
 
 class BaseLLM(ABC):
@@ -118,7 +126,87 @@ class BaseLLM(ABC):
         })
         
         return response
-    
+
+    async def chat_stream(
+        self,
+        user_message: str,
+        system_prompt: Optional[str] = None,
+        stop_words: Optional[List[str]] = None
+    ) -> AsyncGenerator[LLMResult, None]:
+        """
+        Async streaming chat interface
+
+        Args:
+            user_message: User's message
+            system_prompt: Optional system prompt
+            stop_words: List of stop words to end streaming
+
+        Yields:
+            LLMResult: Generated token with metadata
+        """
+        # Build messages
+        messages = []
+        if system_prompt:
+            messages.append({
+                "role": "system",
+                "content": system_prompt
+            })
+
+        # Add conversation history
+        messages.extend(self.conversation_history)
+
+        # Add current user message
+        messages.append({
+            "role": "user",
+            "content": user_message
+        })
+
+        stop_words = stop_words or []
+
+        async for chunk in self._chat_stream_impl(messages):
+            is_final = False
+            stop_reason = None
+
+            # Check stop words
+            for word in stop_words:
+                if chunk.endswith(word):
+                    is_final = True
+                    stop_reason = "stop"
+                    chunk = chunk[:-len(word)]
+                    break
+
+            if chunk:
+                yield LLMResult(
+                    token=chunk,
+                    is_final=is_final,
+                    stop_reason=stop_reason
+                )
+
+            if is_final:
+                break
+
+        # Add to history after streaming completes
+        self.conversation_history.append({
+            "role": "user",
+            "content": user_message
+        })
+
+    @abstractmethod
+    async def _chat_stream_impl(
+        self,
+        messages: List[Dict[str, str]]
+    ) -> AsyncGenerator[str, None]:
+        """
+        Internal async streaming implementation
+
+        Args:
+            messages: List of message dicts
+
+        Yields:
+            Text chunks as they are generated
+        """
+        pass
+
     def _format_messages(self, messages: List[Dict[str, str]]) -> str:
         """
         Format messages for prompt

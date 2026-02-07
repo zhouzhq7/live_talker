@@ -7,6 +7,9 @@
 
 | ID | Time | T | Title | Read |
 |----|------|---|-------|------|
+| #244 | 10:24 AM | 🔴 | Fixed LLM streaming test interface validation | ~239 |
+| #243 | " | 🔴 | Fixed test class missing abstract methods | ~228 |
+| #241 | " | 🟣 | LLM unit test suite created | ~281 |
 | #226 | 10:02 AM | 🟣 | ASR unit test suite created | ~293 |
 | #194 | 9:39 AM | ✅ | Added clarifying comment to test_reset | ~179 |
 | #193 | " | 🔴 | Fixed audio buffer test assertion | ~231 |

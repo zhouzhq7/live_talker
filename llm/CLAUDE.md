@@ -7,6 +7,10 @@
 
 | ID | Time | T | Title | Read |
 |----|------|---|-------|------|
+| #242 | 10:24 AM | 🟣 | Added async streaming method to DeepseekLLM | ~228 |
+| #240 | " | 🟣 | Added async streaming interface to BaseLLM | ~115 |
+| #239 | " | 🟣 | DeepseekLLM upgraded with async streaming support | ~228 |
+| #238 | 10:23 AM | 🟣 | Added LLMResult and streaming interface to base.py | ~247 |
 | #174 | 9:30 AM | 🟣 | Audio pipeline enhancement with AEC, buffering, and VAD | ~310 |
 | #157 | 8:49 AM | ✅ | Added Claude.md documentation files to Live Talker modules | ~206 |
 | #155 | 8:48 AM | ✅ | Module-level CLAUDE.md documentation created | ~253 |
