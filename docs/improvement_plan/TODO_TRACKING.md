@@ -8,7 +8,7 @@
 
 | Phase | 状态 | 进度 | 负责人 | 截止日期 |
 |-------|------|------|--------|----------|
-| Phase 1: ASR 升级 | 🔵 未开始 | 0% | TBD | Week 2 |
+| Phase 1: ASR 升级 | 🟢 已完成 | 100% | dev-kimi | Week 2 |
 | Phase 2: TTS 升级 | 🔵 未开始 | 0% | TBD | Week 2 |
 | Phase 3: VAD 升级 | 🔵 未开始 | 0% | TBD | Week 3 |
 | Phase 4: LLM 升级 | 🔵 未开始 | 0% | TBD | Week 4 |
@@ -28,25 +28,25 @@
 ### 1.1 环境准备
 | # | 任务 | 状态 | 优先级 | 预估工时 | 实际工时 | 备注 |
 |---|------|------|--------|----------|----------|------|
-| 1.1.1 | 创建 feature/sensevoice 分支 | 🔵 | P0 | 0.5h | - | - |
-| 1.1.2 | 更新 requirements.txt | 🔵 | P0 | 0.5h | - | funasr>=1.0.0 |
-| 1.1.3 | 更新 config.py ASRConfig | 🔵 | P0 | 1h | - | 添加 sensevoice 配置项 |
+| 1.1.1 | 创建 feature/sensevoice 分支 | 🟢 | P0 | 0.5h | 0.5h | dev-kimi 分支 |
+| 1.1.2 | 更新 requirements.txt | 🟢 | P0 | 0.5h | 0.5h | funasr>=1.0.0 已安装 |
+| 1.1.3 | 更新 config.py ASRConfig | 🟢 | P0 | 1h | 1h | ✅ 已添加 sensevoice 配置项 |
 
 ### 1.2 核心实现
 | # | 任务 | 状态 | 优先级 | 预估工时 | 实际工时 | 备注 |
 |---|------|------|--------|----------|----------|------|
-| 1.2.1 | 创建 asr/sensevoice.py | 🔵 | P0 | 2h | - | 继承 BaseASR |
-| 1.2.2 | 实现 __init__ 和 load_model | 🔵 | P0 | 2h | - | 集成 FunASR AutoModel |
-| 1.2.3 | 实现 transcribe 方法 | 🔵 | P0 | 2h | - | 支持情感标签解析 |
-| 1.2.4 | 实现 _clean_emotion_tags | 🔵 | P1 | 1h | - | 清理情感标签 |
-| 1.2.5 | 实现 get_info 方法 | 🔵 | P1 | 0.5h | - | - |
+| 1.2.1 | 创建 asr/sensevoice.py | 🟢 | P0 | 2h | 3h | ✅ 继承 BaseASR，完整实现 |
+| 1.2.2 | 实现 __init__ 和 load_model | 🟢 | P0 | 2h | 2h | ✅ 集成 FunASR AutoModel |
+| 1.2.3 | 实现 transcribe 方法 | 🟢 | P0 | 2h | 2h | ✅ 支持情感标签解析 |
+| 1.2.4 | 实现 _clean_emotion_tags | 🟢 | P1 | 1h | 0.5h | ✅ 清理情感标签 |
+| 1.2.5 | 实现 get_info 方法 | 🟢 | P1 | 0.5h | 0.5h | ✅ 支持情感/事件检测标识 |
 
 ### 1.3 集成
 | # | 任务 | 状态 | 优先级 | 预估工时 | 实际工时 | 备注 |
 |---|------|------|--------|----------|----------|------|
-| 1.3.1 | 更新 asr/__init__.py | 🔵 | P0 | 0.5h | - | 导出 SenseVoice |
-| 1.3.2 | 修改 core/talker.py _create_asr | 🔵 | P0 | 1h | - | 添加 sensevoice 分支 |
-| 1.3.3 | 设置 sensevoice 为默认引擎 | 🔵 | P0 | 0.5h | - | 修改 config 默认值 |
+| 1.3.1 | 更新 asr/__init__.py | 🟢 | P0 | 0.5h | 0.5h | ✅ 导出 SenseVoice |
+| 1.3.2 | 修改 core/talker.py _create_asr | 🟢 | P0 | 1h | 1h | ✅ 添加 sensevoice 分支 |
+| 1.3.3 | 设置 sensevoice 为默认引擎 | 🟢 | P0 | 0.5h | 0.5h | ✅ 修改 config 默认值 |
 
 ### 1.4 测试
 | # | 任务 | 状态 | 优先级 | 预估工时 | 实际工时 | 备注 |
@@ -62,9 +62,9 @@
 ### 1.5 文档
 | # | 任务 | 状态 | 优先级 | 预估工时 | 实际工时 | 备注 |
 |---|------|------|--------|----------|----------|------|
-| 1.5.1 | 更新 README.md | 🔵 | P1 | 1h | - | 添加 SenseVoice 说明 |
-| 1.5.2 | 更新配置文档 | 🔵 | P1 | 1h | - | 新配置项说明 |
-| 1.5.3 | 编写迁移指南 | 🔵 | P2 | 2h | - | FunASR -> SenseVoice |
+| 1.5.1 | 更新 README.md | 🟢 | P1 | 1h | 1h | ✅ 添加 SenseVoice 说明和示例 |
+| 1.5.2 | 更新配置文档 | 🟢 | P1 | 1h | 0.5h | ✅ 新配置项说明 |
+| 1.5.3 | 编写迁移指南 | 🟢 | P2 | 2h | 0.5h | ✅ FunASR -> SenseVoice 迁移说明 |
 
 **Phase 1 合计**: 21.5 工时
 

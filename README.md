@@ -23,7 +23,8 @@ When encountering issues, you can check the debug logs output in the terminal to
 
 ## Core Features
 
-- 🎤 **Real-time Speech Recognition (ASR)** - Supports Whisper, FunASR, FireRedASR
+- 🎤 **Real-time Speech Recognition (ASR)** - Supports SenseVoice (default), FunASR, Whisper, FireRedASR
+  - **SenseVoice**: Alibaba's latest model with emotion recognition and 50+ language support
 - 🔊 **Text-to-Speech (TTS)** - Supports Edge-TTS, Pyttsx3
 - 🎯 **Voice Activity Detection (VAD)** - Automatic segmentation, interruption detection
 - 🤖 **Intelligent Conversation (LLM)** - Deepseek API integration
@@ -37,7 +38,11 @@ When encountering issues, you can check the debug logs output in the terminal to
 
 - [ ] Support for more LLM providers (OpenAI, Anthropic, etc.)
 - [ ] Web-based GUI client
-- [ ] Streaming ASR for lower latency
+- [x] SenseVoice ASR with emotion recognition (Phase 1 ✓)
+- [ ] MeloTTS for open-source TTS (Phase 2)
+- [ ] TEN-VAD for better VAD (Phase 3)
+- [ ] Ollama local LLM support (Phase 4)
+- [ ] Streaming pipeline for <1s latency (Phase 5)
 - [ ] Multi-language support
 - [ ] Conversation history persistence
 - [ ] Custom wake word detection
@@ -126,7 +131,7 @@ Edit `config.py` or set environment variables:
 export DEEPSEEK_API_KEY="your-api-key"
 
 # ASR engine selection
-export ASR_ENGINE="funasr"  # funasr, whisper, fireredasr
+export ASR_ENGINE="sensevoice"  # sensevoice (default), funasr, whisper, fireredasr
 
 # TTS engine selection
 export TTS_ENGINE="edge"    # edge, pyttsx3
@@ -148,13 +153,17 @@ You can customize the path using the `MODEL_CACHE_DIR` environment variable.
 
 ```python
 from core.talker import LiveTalker
+from config import TalkerConfig
 
-# Initialize
-talker = LiveTalker(
-    asr_engine="funasr",
-    tts_engine="edge",
-    llm_provider="deepseek"
-)
+# Initialize with default config (SenseVoice ASR)
+talker = LiveTalker()
+
+# Or customize configuration
+config = TalkerConfig()
+config.asr.engine = "sensevoice"  # Use SenseVoice (default)
+config.asr.sensevoice_language = "auto"  # auto, zh, en, yue, ja, ko
+
+talker = LiveTalker(config)
 
 # Start conversation
 talker.start()
@@ -165,7 +174,7 @@ talker.start()
 
 ## Tech Stack
 
-- **ASR**: FunASR, Whisper, FireRedASR
+- **ASR**: SenseVoice (default), FunASR, Whisper, FireRedASR
 - **TTS**: Edge-TTS, Pyttsx3
 - **VAD**: Silero, WebRTC, Energy-based
 - **LLM**: Deepseek API
