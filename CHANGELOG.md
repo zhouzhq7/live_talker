@@ -30,6 +30,30 @@ All notable changes to this project will be documented in this file.
 - Updated README.md with TEN-VAD features
 - Added comparison with Silero VAD
 
+### Phase 5: Streaming Pipeline Optimization ✅
+
+#### Added
+- **Streaming Pipeline** - 流式处理降低端到端延迟
+  - IncrementalASR: 滑动窗口增量识别
+  - SentenceSplitter: 智能句子分割
+  - StreamingTTS: 边合成边播放
+  - 目标延迟: < 1秒
+
+#### Features
+- 流式ASR支持 - 实时部分结果输出
+- 流式TTS支持 - 逐句合成播放
+- Pipeline状态管理 - IDLE/LISTENING/RECOGNIZING/THINKING/SYNTHESIZING/SPEAKING
+- 性能指标追踪 - 延迟统计和优化分析
+- 打断处理 - 支持用户中断系统语音
+
+#### Tests
+- 24个单元测试通过
+- 流式演示脚本
+
+#### Documentation
+- 流式架构设计文档
+- 延迟优化指南
+
 ### Phase 2: TTS Upgrade - MeloTTS ✅
 
 #### Added
