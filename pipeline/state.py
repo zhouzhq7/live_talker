@@ -23,8 +23,11 @@ class PipelineEvent(Enum):
     """流水线事件枚举"""
     # VAD 事件
     SPEECH_STARTED = "speech_started"
-    SPEECH_ENDED = "speech_ended"
+    SPEECH_ENDED = "speech_end"
     INTERRUPTION_DETECTED = "interruption_detected"
+
+    # 错误事件
+    ERROR = "error"
 
     # ASR 事件
     ASR_PARTIAL = "asr_partial"

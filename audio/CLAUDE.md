@@ -7,8 +7,6 @@
 
 | ID | Time | T | Title | Read |
 |----|------|---|-------|------|
-| #155 | 8:48 AM | ✅ | Module-level CLAUDE.md documentation created | ~253 |
-| #152 | 8:32 AM | 🔵 | VAD implementation with interruption detection discovered | ~329 |
-| #151 | 2:17 AM | 🔵 | Analyzed live_talker architecture and alternatives | ~383 |
-| #148 | 2:15 AM | 🔵 | RealtimeRecorder audio processing pipeline discovered | ~272 |
+| #173 | 9:29 AM | 🟣 | Extended audio module exports | ~238 |
+| #170 | 9:26 AM | 🟣 | New async AudioCollector module implemented | ~329 |
 </claude-mem-context>

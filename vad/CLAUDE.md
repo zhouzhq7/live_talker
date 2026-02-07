@@ -7,6 +7,7 @@
 
 | ID | Time | T | Title | Read |
 |----|------|---|-------|------|
+| #175 | 9:30 AM | 🔄 | Phase 1 infrastructure refactoring complete | ~305 |
 | #166 | 9:22 AM | 🟣 | Created SileroVAD implementation | ~284 |
 | #165 | " | 🟣 | VAD base interface implementation started | ~273 |
 | #163 | 9:21 AM | 🟣 | Created VAD module structure with SileroVAD implementation | ~204 |

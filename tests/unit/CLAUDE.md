@@ -7,5 +7,5 @@
 
 | ID | Time | T | Title | Read |
 |----|------|---|-------|------|
-| #168 | 9:23 AM | ✅ | Created pipeline module structure | ~182 |
+| #194 | 9:39 AM | ✅ | Added clarifying comment to test_reset | ~179 |
 </claude-mem-context>

@@ -144,6 +144,7 @@ class StreamOrchestrator:
         """重置流水线状态"""
         self._context.reset()
         self._interrupted = False
+        self._state = PipelineState.IDLE
 
     async def process(
         self,
@@ -311,16 +312,20 @@ class StreamOrchestrator:
                     if self._interrupted:
                         break
                     results.append(result)
+                    # 支持 dict 和 NamedTuple
+                    text = result.get("text") if isinstance(result, dict) else result.text
+                    is_final = result.get("is_final") if isinstance(result, dict) else result.is_final
                     # 通知部分结果
                     await self._emit_event(PipelineEvent.ASR_PARTIAL, {
-                        "text": result.text if result.text else "",
-                        "is_final": result.is_final,
+                        "text": text or "",
+                        "is_final": is_final,
                     })
 
                 # 取最终结果
                 if results:
                     final_result = results[-1]
-                    self._context.asr_result = final_result.text or ""
+                    text = final_result.get("text") if isinstance(final_result, dict) else final_result.text
+                    self._context.asr_result = text or ""
                     await self._emit_event(PipelineEvent.ASR_COMPLETE, {
                         "text": self._context.asr_result,
                     })
@@ -404,10 +409,13 @@ class StreamOrchestrator:
                 ):
                     if self._interrupted:
                         break
-                    audio_chunks.append(result.audio_chunk)
+                    # 支持 dict 和 NamedTuple
+                    audio_chunk = result.get("audio_chunk") if isinstance(result, dict) else result.audio_chunk
+                    is_final = result.get("is_final") if isinstance(result, dict) else result.is_final
+                    audio_chunks.append(audio_chunk)
                     await self._emit_event(PipelineEvent.TTS_AUDIO, {
-                        "chunk_size": len(result.audio_chunk),
-                        "is_final": result.is_final,
+                        "chunk_size": len(audio_chunk),
+                        "is_final": is_final,
                     })
 
                 self._context.tts_audio = b''.join(audio_chunks)

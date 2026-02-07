@@ -7,6 +7,8 @@
 
 | ID | Time | T | Title | Read |
 |----|------|---|-------|------|
+| #174 | 9:30 AM | 🟣 | Audio pipeline enhancement with AEC, buffering, and VAD | ~310 |
+| #157 | 8:49 AM | ✅ | Added Claude.md documentation files to Live Talker modules | ~206 |
 | #155 | 8:48 AM | ✅ | Module-level CLAUDE.md documentation created | ~253 |
 | #151 | 2:17 AM | 🔵 | Analyzed live_talker architecture and alternatives | ~383 |
 | #144 | 2:15 AM | 🔵 | Pyttsx3 offline TTS implementation discovered | ~248 |

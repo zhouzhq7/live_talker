@@ -5,6 +5,7 @@ Ring Buffer
 
 import asyncio
 import logging
+import threading
 import numpy as np
 from typing import Optional, NamedTuple
 from dataclasses import dataclass
@@ -66,7 +67,7 @@ class RingBuffer:
         self._underruns = 0
 
         # 锁
-        self._lock = asyncio.Lock()
+        self._lock = threading.Lock()
 
     @property
     def capacity(self) -> int:
@@ -129,7 +130,7 @@ class RingBuffer:
 
     async def write_async(self, data: bytes) -> int:
         """异步写入数据"""
-        async with self._lock:
+        with self._lock:
             return self.write(data)
 
     def read(self, size: Optional[int] = None) -> bytes:
@@ -141,7 +142,7 @@ class RingBuffer:
         Returns:
             bytes: 读取的数据
         """
-        async with self._lock:
+        with self._lock:
             if self._size == 0:
                 self._underruns += 1
                 return b''
@@ -175,7 +176,7 @@ class RingBuffer:
 
     async def read_async(self, size: Optional[int] = None) -> bytes:
         """异步读取数据"""
-        async with self._lock:
+        with self._lock:
             return self.read(size)
 
     def get_pre_record(self, duration: float) -> bytes:
@@ -199,7 +200,7 @@ class RingBuffer:
         Returns:
             bytes: 查看的数据
         """
-        async with self._lock:
+        with self._lock:
             if self._size == 0:
                 return b''
 
