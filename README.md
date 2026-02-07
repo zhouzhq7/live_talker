@@ -27,7 +27,7 @@ When encountering issues, you can check the debug logs output in the terminal to
   - **SenseVoice**: Alibaba's latest model with emotion recognition and 50+ language support
 - 🔊 **Text-to-Speech (TTS)** - Supports MeloTTS (default, no FFmpeg), Edge-TTS, Pyttsx3
   - **MeloTTS**: Fully open source, supports ZH/EN/ES/FR/JP/KR, no FFmpeg required
-- 🎯 **Voice Activity Detection (VAD)** - Automatic segmentation, interruption detection
+- 🎯 **Voice Activity Detection (VAD)** - TEN-VAD (default, 306KB, 32% faster), Silero, WebRTC, Energy
 - 🤖 **Intelligent Conversation (LLM)** - Deepseek API integration
 - ⚡ **Low Latency** - Optimized real-time processing pipeline
 
@@ -44,6 +44,10 @@ When encountering issues, you can check the debug logs output in the terminal to
   - No FFmpeg dependency
   - Fully offline
   - Multilingual support (ZH/EN/ES/FR/JP/KR)
+- [x] TEN-VAD for lightweight VAD (Phase 3 ✓)
+  - 306KB library size (86% smaller than Silero)
+  - 32% faster than Silero
+  - Lower end-of-sentence detection latency
 - [ ] TEN-VAD for better VAD (Phase 3)
 - [ ] Ollama local LLM support (Phase 4)
 - [ ] Streaming pipeline for <1s latency (Phase 5)

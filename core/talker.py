@@ -51,7 +51,8 @@ class LiveTalker:
             threshold=self.config.vad.threshold,
             min_speech_duration=self.config.vad.min_speech_duration,
             min_silence_duration=self.config.vad.min_silence_duration,
-            model_cache_dir=self.config.model_cache_dir
+            model_cache_dir=self.config.model_cache_dir,
+            hop_size=self.config.vad.ten_hop_size
         )
         
         # ASR

@@ -4,6 +4,32 @@ All notable changes to this project will be documented in this file.
 
 ## [2.0.0] - 2025-02-07
 
+### Phase 3: VAD Upgrade - TEN-VAD ✅
+
+#### Added
+- **TEN-VAD** - Lightweight voice activity detection (default)
+  - Library size: only 306KB (86% smaller than Silero)
+  - 32% faster than Silero VAD
+  - Lower end-of-sentence detection latency
+  - Cross-platform support (Linux/macOS/Windows)
+  - Fully offline operation
+
+#### Changed
+- **Default VAD method** changed from `silero` to `ten`
+- Updated `config.py` with TEN-VAD configuration:
+  - `ten_hop_size`: Frame hop size (256 = 16ms at 16kHz)
+  - `ten_threshold`: Detection threshold
+- Updated `audio/vad.py` to support TEN-VAD as an option
+- TEN-VAD falls back to Silero if not available
+
+#### Tests
+- Added 13 unit tests for TEN-VAD
+- All tests passing ✅
+
+#### Documentation
+- Updated README.md with TEN-VAD features
+- Added comparison with Silero VAD
+
 ### Phase 2: TTS Upgrade - MeloTTS ✅
 
 #### Added

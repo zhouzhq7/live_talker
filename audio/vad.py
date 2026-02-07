@@ -1,7 +1,7 @@
 """
 Voice Activity Detection (VAD)
 Detect speech presence and support user interruption
-参考 Eva/perception/audio/vad_detector.py
+支持多种 VAD 引擎: silero, ten, webrtc, energy
 """
 
 import logging
@@ -26,12 +26,13 @@ class VADDetector:
     
     def __init__(
         self,
-        method: str = "silero",  # "silero", "webrtc", or "energy"
+        method: str = "silero",  # "silero", "ten", "webrtc", or "energy"
         sample_rate: int = 16000,
         threshold: float = 0.5,
         min_speech_duration: float = 0.25,  # 250ms
         min_silence_duration: float = 0.5,   # 500ms
-        model_cache_dir: Optional[str] = None
+        model_cache_dir: Optional[str] = None,
+        hop_size: int = 256  # For TEN-VAD
     ):
         """
         Initialize VAD detector
@@ -50,8 +51,10 @@ class VADDetector:
         self.min_speech_duration = min_speech_duration
         self.min_silence_duration = min_silence_duration
         self.model_cache_dir = model_cache_dir or os.getenv("MODEL_CACHE_DIR", "D:\\models")
+        self.hop_size = hop_size
         
         self.model = None
+        self.ten_vad = None  # TEN-VAD instance
         self.speech_start_time = None
         self.silence_start_time = None
         self.is_speaking = False
@@ -77,7 +80,29 @@ class VADDetector:
     
     def _init_vad(self):
         """Initialize VAD model based on method"""
-        if self.method == "silero":
+        if self.method == "ten":
+            try:
+                from .vad_ten import TENVAD
+                self.ten_vad = TENVAD(
+                    hop_size=self.hop_size,
+                    threshold=self.threshold,
+                    sample_rate=self.sample_rate,
+                    min_speech_duration=self.min_speech_duration,
+                    min_silence_duration=self.min_silence_duration
+                )
+                if self.ten_vad.is_available():
+                    logger.info("[VAD] TEN-VAD loaded (306KB, 32% faster than Silero)")
+                else:
+                    logger.warning("[VAD] TEN-VAD not available, falling back to Silero")
+                    self.method = "silero"
+                    self._init_vad()  # Re-init with Silero
+            except Exception as e:
+                logger.warning(f"[VAD] TEN-VAD not available: {e}")
+                logger.info("[VAD] Falling back to Silero VAD")
+                self.method = "silero"
+                self._init_vad()  # Re-init with Silero
+        
+        elif self.method == "silero":
             try:
                 import torch
                 # Load Silero VAD model
@@ -123,7 +148,9 @@ class VADDetector:
         if not audio_data:
             return False
         
-        if self.method == "silero":
+        if self.method == "ten":
+            result = self._detect_ten(audio_data)
+        elif self.method == "silero":
             result = self._detect_silero(audio_data)
         elif self.method == "webrtc":
             result = self._detect_webrtc(audio_data)
@@ -132,6 +159,17 @@ class VADDetector:
         
         logger.debug(f"[VAD] 检测结果: {'有语音' if result else '无语音'} (方法: {self.method}, 音频长度: {len(audio_data)} bytes)")
         return result
+    
+    def _detect_ten(self, audio_data: bytes) -> bool:
+        """TEN-VAD detection"""
+        if self.ten_vad is None or not self.ten_vad.is_available():
+            return self._detect_energy(audio_data)
+        
+        try:
+            return self.ten_vad.detect(audio_data)
+        except Exception as e:
+            logger.error(f"[VAD] TEN-VAD detection failed: {e}")
+            return self._detect_energy(audio_data)
     
     def _detect_silero(self, audio_data: bytes) -> bool:
         """Silero VAD detection"""

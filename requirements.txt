@@ -18,6 +18,8 @@ melotts>=0.1.0                 # MeloTTS (default, open source, no FFmpeg)
 pyttsx3>=2.90                  # Pyttsx3 (offline)
 
 # VAD
+# ten-vad is optional and can be installed via:
+# pip install git+https://github.com/TEN-framework/ten-vad.git
 torch>=2.0.0                   # For Silero VAD
 torchaudio>=2.0.0              # Required by FunASR
 webrtcvad>=2.0.10              # WebRTC VAD (optional, requires C++ compiler)

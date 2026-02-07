@@ -77,7 +77,19 @@ class TTSConfig:
 @dataclass
 class VADConfig:
     """VAD configuration"""
-    method: str = "silero"          # silero, webrtc, energy
+    method: str = "ten"             # ten (default), silero, webrtc, energy
+    
+    # TEN-VAD settings (default, 306KB, 32% faster)
+    ten_hop_size: int = 256         # 16ms at 16kHz
+    ten_threshold: float = 0.5
+    
+    # Silero settings (alternative)
+    silero_threshold: float = 0.5
+    
+    # WebRTC settings
+    webrtc_aggressiveness: int = 3  # 0-3
+    
+    # Common settings
     threshold: float = 0.5
     min_speech_duration: float = 0.25   # seconds
     min_silence_duration: float = 0.5   # seconds
