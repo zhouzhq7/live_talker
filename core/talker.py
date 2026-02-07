@@ -11,7 +11,7 @@ from config import TalkerConfig
 from audio import RealtimeRecorder, VADDetector, AudioPlayer
 from asr import BaseASR, SenseVoice, FunASR, Whisper, FireRedASR
 from tts import BaseTTS, MeloTTS, EdgeTTS, Pyttsx3TTS
-from llm import BaseLLM, DeepseekLLM
+from llm import ConversationManager as LLMConversationManager, ConversationConfig
 from core.conversation import ConversationManager
 
 logger = logging.getLogger(__name__)
@@ -63,9 +63,19 @@ class LiveTalker:
         logger.info(f"Initializing TTS engine: {self.config.tts.engine}...")
         self.tts = self._create_tts()
         
-        # LLM
-        logger.info(f"Initializing LLM: {self.config.llm.provider}...")
-        self.llm = self._create_llm()
+        # LLM with multi-provider support
+        logger.info(f"Initializing LLM with multi-provider support...")
+        self.llm_manager = self._create_llm_manager()
+        
+        # Legacy LLM support (for compatibility)
+        from llm import DeepseekLLM
+        self.llm = DeepseekLLM(
+            api_key=self.config.llm.deepseek_api_key or self.config.llm.api_key,
+            api_base=self.config.llm.deepseek_api_base or self.config.llm.api_base,
+            model=self.config.llm.deepseek_model or self.config.llm.model,
+            temperature=self.config.llm.temperature,
+            max_tokens=self.config.llm.max_tokens
+        )
         
         # Audio components
         logger.info("Initializing audio components...")
@@ -168,21 +178,29 @@ class LiveTalker:
             logger.warning(f"Unknown TTS engine: {engine}, using MeloTTS")
             return MeloTTS()
     
-    def _create_llm(self) -> BaseLLM:
-        """Create LLM provider based on config"""
-        provider = self.config.llm.provider.lower()
+    def _create_llm_manager(self) -> LLMConversationManager:
+        """Create LLM conversation manager with multi-provider support"""
+        llm_config = ConversationConfig(
+            primary_provider=self.config.llm.provider,
+            enable_fallback=self.config.llm.enable_fallback,
+            fallback_providers=self.config.llm.fallback_providers,
+            temperature=self.config.llm.temperature,
+            max_tokens=self.config.llm.max_tokens,
+            system_prompt=self.conversation.system_prompt if hasattr(self, 'conversation') else "You are a helpful assistant.",
+            max_history=self.config.max_conversation_history,
+            # API keys
+            deepseek_api_key=self.config.llm.deepseek_api_key,
+            zhipu_api_key=self.config.llm.zhipu_api_key,
+            openai_api_key=self.config.llm.openai_api_key,
+            moonshot_api_key=self.config.llm.moonshot_api_key,
+            # Models
+            deepseek_model=self.config.llm.deepseek_model,
+            zhipu_model=self.config.llm.zhipu_model,
+            openai_model=self.config.llm.openai_model,
+            moonshot_model=self.config.llm.moonshot_model
+        )
         
-        if provider == "deepseek":
-            return DeepseekLLM(
-                api_key=self.config.llm.api_key,
-                api_base=self.config.llm.api_base,
-                model=self.config.llm.model,
-                temperature=self.config.llm.temperature,
-                max_tokens=self.config.llm.max_tokens
-            )
-        else:
-            logger.warning(f"Unknown LLM provider: {provider}, using Deepseek")
-            return DeepseekLLM()
+        return LLMConversationManager(config=llm_config)
     
     def start(self):
         """Start the conversation system"""
@@ -199,7 +217,7 @@ class LiveTalker:
             logger.error("[LiveTalker] TTS not available")
             return
         
-        if not self.llm.is_available():
+        if not self.llm.is_available() and not (hasattr(self, 'llm_manager') and self.llm_manager.is_ready()):
             logger.error("[LiveTalker] LLM not available")
             return
         
@@ -285,15 +303,27 @@ class LiveTalker:
             asr_duration = len(audio_data) / (self.config.audio.sample_rate * 2)  # 16-bit = 2 bytes
             logger.info(f"[ASR] ✅ 识别完成 (耗时: {asr_elapsed:.2f}s, 音频时长: {asr_duration:.2f}s, 文本长度: {len(text)} 字符)")
             
-            # LLM: Generate response
+            # LLM: Generate response (use new multi-provider manager if available)
             logger.info("[LiveTalker] 调用LLM生成回复...")
             llm_start_time = time.time()
             
-            response = self.llm.chat(
-                user_message=text,
-                system_prompt=self.conversation.system_prompt,
-                stream=False
-            )
+            # Try new multi-provider manager first
+            if hasattr(self, 'llm_manager') and self.llm_manager.is_ready():
+                response = self.llm_manager.chat(
+                    message=text,
+                    stream=False,
+                    system_prompt=self.conversation.system_prompt
+                )
+                # Get provider info for logging
+                available = self.llm_manager.get_available_providers()
+                logger.info(f"[LiveTalker] 使用Provider: {available[0] if available else 'unknown'}")
+            else:
+                # Fallback to legacy LLM
+                response = self.llm.chat(
+                    user_message=text,
+                    system_prompt=self.conversation.system_prompt,
+                    stream=False
+                )
             
             llm_elapsed = time.time() - llm_start_time
             

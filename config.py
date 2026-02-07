@@ -98,14 +98,44 @@ class VADConfig:
 
 @dataclass
 class LLMConfig:
-    """LLM configuration"""
-    provider: str = "deepseek"      # deepseek, openai, local
-    api_key: Optional[str] = None
-    api_base: Optional[str] = None  # Custom API endpoint
-    model: str = "deepseek-chat"    # Model name
+    """LLM configuration - Multi-provider support with automatic failover"""
+    
+    # Provider selection
+    provider: str = "deepseek"      # Primary provider: deepseek, zhipu, openai, moonshot
+    enable_fallback: bool = True    # Enable automatic failover
+    fallback_providers: list = field(default_factory=lambda: ["zhipu", "openai"])
+    
+    # Common settings
     temperature: float = 0.7
     max_tokens: int = 2000
-    stream: bool = True             # Stream response
+    stream: bool = True
+    system_prompt: str = "You are a helpful assistant."
+    max_history: int = 10
+    
+    # DeepSeek settings
+    deepseek_api_key: Optional[str] = None
+    deepseek_api_base: Optional[str] = None
+    deepseek_model: str = "deepseek-chat"  # deepseek-chat, deepseek-coder
+    
+    # Zhipu (智谱) settings
+    zhipu_api_key: Optional[str] = None
+    zhipu_api_base: Optional[str] = None
+    zhipu_model: str = "glm-4-flash"  # glm-4-flash (free), glm-4-air, glm-4
+    
+    # OpenAI settings
+    openai_api_key: Optional[str] = None
+    openai_api_base: Optional[str] = None
+    openai_model: str = "gpt-4o-mini"  # gpt-4o-mini, gpt-4o, gpt-3.5-turbo
+    
+    # Moonshot (Kimi) settings
+    moonshot_api_key: Optional[str] = None
+    moonshot_api_base: Optional[str] = None
+    moonshot_model: str = "moonshot-v1-8k"  # moonshot-v1-8k, 32k, 128k
+    
+    # Legacy compatibility (deprecated, use provider-specific settings)
+    api_key: Optional[str] = None
+    api_base: Optional[str] = None
+    model: str = "deepseek-chat"
 
 
 @dataclass
@@ -143,11 +173,34 @@ def load_config_from_env() -> TalkerConfig:
     # TTS engine
     config.tts.engine = os.getenv("TTS_ENGINE", config.tts.engine)
     
-    # LLM settings
-    config.llm.api_key = os.getenv("DEEPSEEK_API_KEY") or os.getenv("OPENAI_API_KEY")
-    config.llm.api_base = os.getenv("DEEPSEEK_API_BASE") or os.getenv("OPENAI_API_BASE")
+    # LLM settings - Multi-provider
     config.llm.provider = os.getenv("LLM_PROVIDER", config.llm.provider)
-    config.llm.model = os.getenv("LLM_MODEL", config.llm.model)
+    config.llm.enable_fallback = os.getenv("LLM_ENABLE_FALLBACK", "true").lower() == "true"
+    
+    # DeepSeek
+    config.llm.deepseek_api_key = os.getenv("DEEPSEEK_API_KEY")
+    config.llm.deepseek_api_base = os.getenv("DEEPSEEK_API_BASE")
+    config.llm.deepseek_model = os.getenv("DEEPSEEK_MODEL", config.llm.deepseek_model)
+    
+    # Zhipu
+    config.llm.zhipu_api_key = os.getenv("ZHIPU_API_KEY")
+    config.llm.zhipu_api_base = os.getenv("ZHIPU_API_BASE")
+    config.llm.zhipu_model = os.getenv("ZHIPU_MODEL", config.llm.zhipu_model)
+    
+    # OpenAI
+    config.llm.openai_api_key = os.getenv("OPENAI_API_KEY")
+    config.llm.openai_api_base = os.getenv("OPENAI_API_BASE")
+    config.llm.openai_model = os.getenv("OPENAI_MODEL", config.llm.openai_model)
+    
+    # Moonshot
+    config.llm.moonshot_api_key = os.getenv("MOONSHOT_API_KEY")
+    config.llm.moonshot_api_base = os.getenv("MOONSHOT_API_BASE")
+    config.llm.moonshot_model = os.getenv("MOONSHOT_MODEL", config.llm.moonshot_model)
+    
+    # Legacy compatibility
+    config.llm.api_key = config.llm.deepseek_api_key or config.llm.openai_api_key
+    config.llm.api_base = config.llm.deepseek_api_base or config.llm.openai_api_base
+    config.llm.model = config.llm.deepseek_model or config.llm.openai_model
     
     return config
 

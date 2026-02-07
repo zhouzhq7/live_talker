@@ -11,7 +11,7 @@
 | Phase 1: ASR 升级 | 🟢 已完成 | 100% | dev-kimi | Week 2 |
 | Phase 2: TTS 升级 | 🟢 已完成 | 100% | dev-kimi | Week 2 |
 | Phase 3: VAD 升级 | 🟢 已完成 | 100% | dev-kimi | Week 3 |
-| Phase 4: LLM 升级 | 🟡 调研完成 | 10% | TBD | Week 4 |
+| Phase 4: LLM 升级 | 🟡 进行中 | 50% | dev-kimi | Week 4 |
 | Phase 5: 流式优化 | 🔵 未开始 | 0% | TBD | Week 6 |
 | 文档 & 发布 | 🔵 未开始 | 0% | TBD | Week 8 |
 
